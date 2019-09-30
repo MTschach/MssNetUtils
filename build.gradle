@@ -50,7 +50,9 @@ dependencies {
    compile group: 'org.apache.logging.log4j'                                  , name: 'log4j-api'                 , version: 'latest.release'
    compile group: 'org.apache.logging.log4j'                                  , name: 'log4j-slf4j-impl'          , version: 'latest.release'
    compile group: 'org.apache.commons'                                        , name: 'commons-lang3'             , version: 'latest.release'
+   compile group: 'org.apache.httpcomponents'                                 , name: 'httpclient'                , version: 'latest.release'
    compile group: 'commons-beanutils'                                         , name: 'commons-beanutils'         , version: 'latest.release'
+   compile group: 'commons-cli'                                               , name: 'commons-cli'               , version: 'latest.release'
 
 
 	testCompile group: 'junit'                                                 , name: 'junit'                     , version: 'latest.release'

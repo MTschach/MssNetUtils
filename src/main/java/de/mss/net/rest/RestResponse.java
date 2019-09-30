@@ -1,4 +1,4 @@
-package de.mss.rest;
+package de.mss.net.rest;
 
 import java.util.HashMap;
 import java.util.Map;

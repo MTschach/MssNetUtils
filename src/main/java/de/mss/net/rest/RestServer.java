@@ -1,4 +1,4 @@
-package de.mss.rest;
+package de.mss.net.rest;
 
 import de.mss.net.AuthenticatedServer;
 import de.mss.net.Server;
@@ -7,7 +7,7 @@ import de.mss.utils.exception.MssException;
 public class RestServer {
 
    private de.mss.net.Server              server = null;
-   private de.de.mss.net.AuthenticatedServer proxy  = null;
+   private de.mss.net.AuthenticatedServer proxy  = null;
 
    public RestServer(String url) throws MssException {
       setServer(url);

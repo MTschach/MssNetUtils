@@ -1,4 +1,4 @@
-package de.mss.rest;
+package de.mss.net.rest;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -9,6 +9,7 @@ import de.mss.utils.exception.MssException;
 public class RestRequest {
 
    private RestMethod          method = RestMethod.GET;
+   private String              url          = null;
    private Map<String, String> urlParams    = null;
    private Map<String, String> headerParams = null;
    private Map<String, String> postParams   = null;
@@ -24,6 +25,15 @@ public class RestRequest {
       setMethod(method);
    }
 
+
+   public String getUrl() {
+      return this.url;
+   }
+
+
+   public void setUrl(String u) {
+      this.url = u;
+   }
 
    public void setMethod(String m) throws MssException {
       this.method = RestMethod.getByMethod(m);

@@ -1,4 +1,4 @@
-package de.mss.rest;
+package de.mss.net.rest;
 
 import de.mss.utils.exception.MssException;
 
@@ -32,7 +32,7 @@ public enum RestMethod {
       }
 
       throw new de.mss.utils.exception.MssException(
-            de.mss.utils.exception.ErrorCodes.ERROR_PROTOCOL_NOT_SUPPORTED,
+            de.mss.net.exception.ErrorCodes.ERROR_PROTOCOL_NOT_SUPPORTED,
             "the method '" + m + "' is not supported");
    }
 }
