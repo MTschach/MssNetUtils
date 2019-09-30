@@ -174,7 +174,7 @@ public class Server {
          }
          catch (NumberFormatException e) {
             throw new MssException(
-                  de.mss.utils.exception.ErrorCodes.ERROR_NOT_PARSABLE,
+                  de.mss.net.exception.ErrorCodes.ERROR_NOT_PARSABLE,
                   e,
                   "the value '" + parts[1] + "' could not be parsed as port");
          }

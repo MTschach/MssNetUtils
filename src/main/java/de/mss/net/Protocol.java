@@ -36,7 +36,7 @@ public enum Protocol {
       }
 
       throw new de.mss.utils.exception.MssException(
-            de.mss.utils.exception.ErrorCodes.ERROR_PROTOCOL_NOT_SUPPORTED,
+            de.mss.net.exception.ErrorCodes.ERROR_PROTOCOL_NOT_SUPPORTED,
             "the protocol '" + p + "' is not supported");
    }
 }

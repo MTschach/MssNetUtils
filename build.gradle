@@ -53,6 +53,14 @@ dependencies {
    compile group: 'org.apache.httpcomponents'                                 , name: 'httpclient'                , version: 'latest.release'
    compile group: 'commons-beanutils'                                         , name: 'commons-beanutils'         , version: 'latest.release'
    compile group: 'commons-cli'                                               , name: 'commons-cli'               , version: 'latest.release'
+   compile group: 'org.eclipse.jetty'                                         , name: 'jetty-servlet'             , version: '9.4.20.v20190813'
+   compile group: 'org.eclipse.jetty'                                         , name: 'jetty-server'              , version: '9.4.20.v20190813'
+   compile group: 'org.eclipse.jetty'                                         , name: 'jetty-http'                , version: '9.4.20.v20190813'
+   compile group: 'commons-cli'                                               , name: 'commons-cli'               , version: 'latest.release'
+   compile group: 'org.codehaus.jackson'                                      , name: 'jackson-core-asl'          , version: 'latest.release'
+   compile group: 'org.codehaus.jackson'                                      , name: 'jackson-mapper-asl'        , version: 'latest.release'
+   compile group: 'javax.ws.rs'                                               , name: 'javax.ws.rs-api'           , version: 'latest.release'
+   compile group: 'org.glassfish.jersey.containers'                           , name: 'jersey-container-servlet'  , version: '2.29.1'
 
 
 	testCompile group: 'junit'                                                 , name: 'junit'                     , version: 'latest.release'

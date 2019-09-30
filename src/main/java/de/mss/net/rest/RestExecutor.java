@@ -1,15 +1,23 @@
 package de.mss.net.rest;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.http.Header;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -29,8 +37,10 @@ public class RestExecutor {
 
    private Logger           logger     = defaultLogger;
 
-   private long             connectionTimeout = 10 * 1000;
-   private long             requestTimeout    = 180 * 1000;
+   private int     connectionTimeout = 10000;
+   private int     requestTimeout    = 180000;
+
+   private boolean binaryResponse    = false;
 
 
    private List<RestServer> serverList = null;
@@ -101,24 +111,132 @@ public class RestExecutor {
       de.mss.utils.StopWatch stopWatch = new de.mss.utils.StopWatch();
       
       try (CloseableHttpClient httpClient = getClientBuilder(server).build()) {
+         RestResponse response = executeWithRetry(loggingId, httpClient, request, server, 3);
+         stopWatch.stop();
+         getLogger()
+               .debug(
+                     de.mss.utils.Tools.formatLoggingId(loggingId)
+                           + "executing request to "
+                           + server.getServer().getCompleteUrl()
+                           + " done ["
+                           + stopWatch.getDuration()
+                           + " ms]");
 
+         return response;
       }
       catch (IOException e) {
          throw new MssException(de.mss.net.exception.ErrorCodes.ERROR_UNABLE_TO_EXECUTE_REQUEST, e, "error while working on httpclient");
       }
+   }
 
 
-      stopWatch.stop();
-      getLogger()
-            .debug(
-                  de.mss.utils.Tools.formatLoggingId(loggingId)
-                        + "executing request to "
-                        + server.getServer().getCompleteUrl()
-                        + " done ["
-                        + stopWatch.getDuration()
-                        + " ms]");
+   private RestResponse executeWithRetry(String loggingId, CloseableHttpClient httpClient, RestRequest request, RestServer server, int retryCount)
+         throws MssException {
+      int retries = retryCount;
+      HttpUriRequest req = getRequestBuilder(request, server).build();
 
-      throw new MssException(de.mss.net.exception.ErrorCodes.ERROR_UNABLE_TO_EXECUTE_REQUEST);
+      HttpHost target = new HttpHost(server.getServer().getHost(), server.getServer().getPort().intValue());
+      while (retries > 0) {
+         retries-- ;
+         try (CloseableHttpResponse resp = httpClient.execute(target, req)) {
+            RestResponse response = new RestResponse(resp.getStatusLine().getStatusCode());
+
+            response.setContent(readContent(resp));
+            response.setBinaryContent(readBinaryContent(resp));
+
+            if (resp.getAllHeaders() != null) {
+               Map<String, String> headers = new HashMap<>();
+               for (Header header : resp.getAllHeaders()) {
+                  headers.put(header.getName(), header.getValue());
+               }
+               response.setHeaderParams(headers);
+            }
+
+            response.setRedirectUrl(getRedirectUrl(resp));
+
+            return response;
+         }
+         catch (IOException e) {
+            getLogger().error(de.mss.utils.Tools.formatLoggingId(loggingId) + "executing request failed. " + retries + " retries left", e);
+         }
+      }
+      return null;
+   }
+
+
+   private String getRedirectUrl(CloseableHttpResponse resp) {
+      if (isRedirect(resp.getStatusLine().getStatusCode())) {
+         Header redirectHeader = resp.getFirstHeader("location");
+         if (redirectHeader != null)
+            return redirectHeader.getValue();
+      }
+
+      return null;
+   }
+
+
+   private byte[] readBinaryContent(CloseableHttpResponse resp) throws MssException {
+      if (resp.getEntity() == null || !this.binaryResponse)
+         return null;
+
+      try (InputStream s = resp.getEntity().getContent()) {
+         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+         int nRead;
+         byte[] data = new byte[16384];
+
+         while ((nRead = s.read(data, 0, data.length)) != -1) {
+            buffer.write(data, 0, nRead);
+         }
+
+         return buffer.toByteArray();
+      }
+      catch (UnsupportedOperationException | IOException e) {
+         throw new MssException(de.mss.net.exception.ErrorCodes.ERROR_METHOD_NOT_SUPPORTED, e);
+      }
+
+   }
+
+
+   private String readContent(CloseableHttpResponse resp) throws MssException {
+
+      if (resp.getEntity() == null || this.binaryResponse)
+         return null;
+      
+      String encoding = null;
+      if (resp.getEntity().getContentEncoding() != null)
+         encoding = resp.getEntity().getContentEncoding().getValue();
+      
+      if (encoding == null)
+         encoding = "UTF-8";
+      
+      try (BufferedReader br = new BufferedReader(new InputStreamReader(resp.getEntity().getContent(), encoding))) {
+         StringBuilder sb = new StringBuilder();
+         
+         String line = null;
+         while ((line = br.readLine()) != null) {
+            if (sb.length() > 0)
+               sb.append(System.getProperty("line.separator"));
+            sb.append(line);
+         }
+
+         return sb.toString();
+      }
+      catch (UnsupportedOperationException | IOException e) {
+         throw new MssException(de.mss.net.exception.ErrorCodes.ERROR_METHOD_NOT_SUPPORTED, e);
+      }
+   }
+
+
+   public static boolean isRedirect(int statusCode) {
+      switch (statusCode) {
+         case org.apache.http.HttpStatus.SC_MOVED_TEMPORARILY:
+         case org.apache.http.HttpStatus.SC_MOVED_PERMANENTLY:
+         case org.apache.http.HttpStatus.SC_SEE_OTHER:
+         case org.apache.http.HttpStatus.SC_TEMPORARY_REDIRECT:
+            return true;
+         default:
+            return false;
+      }
    }
 
 
@@ -179,6 +297,15 @@ public class RestExecutor {
       requestBuilder = applyParams(requestBuilder, request.getUrlParams());
       requestBuilder = applyParams(requestBuilder, request.getPostParams());
       requestBuilder = applyUrlAndParams(requestBuilder, request.getUrl(), request.getUrlParams());
+      
+      RequestConfig conf = RequestConfig
+            .custom()
+            .setConnectionRequestTimeout(this.requestTimeout)
+            .setConnectTimeout(this.connectionTimeout)
+            .setSocketTimeout(this.connectionTimeout)
+            .build();
+      
+      requestBuilder.setConfig(conf);
 
       return requestBuilder;
    }
@@ -255,12 +382,12 @@ public class RestExecutor {
    }
 
 
-   public void setConnectionTimeout(long sec) {
+   public void setConnectionTimeout(int sec) {
       this.connectionTimeout = sec * 1000;
    }
 
 
-   public void setRequestTimeout(long sec) {
+   public void setRequestTimeout(int sec) {
       this.requestTimeout = sec * 1000;
    }
 
