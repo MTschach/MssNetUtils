@@ -1,0 +1,6 @@
+version = 0.1.0
+groupId = Mss
+artifactId = MssNetUtils
+licenses = ['Apache 2'] // or something else 
+id = MssNetUtils
+gitUrl = https://github.com/mtschach/MssNetUtils
