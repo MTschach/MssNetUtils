@@ -1,12 +1,14 @@
-package de.mss.webservice;
+package de.mss.net.webservice;
 
-import java.io.IOException;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.jetty.server.Request;
+
+import de.mss.configtools.ConfigFile;
+import de.mss.utils.exception.MssException;
 
 public interface WebService {
 
@@ -22,7 +24,7 @@ public interface WebService {
    public
          int
          get(String loggingId, Map<String, String> params, Request baseRequest, HttpServletRequest httpRequest, HttpServletResponse httpResponse)
-               throws IOException;
+               throws MssException;
 
 
    public int post(
@@ -31,7 +33,7 @@ public interface WebService {
          Request baseRequest,
          HttpServletRequest httpRequest,
          HttpServletResponse httpResponse)
-         throws IOException;
+         throws MssException;
 
 
    public int patch(
@@ -40,7 +42,7 @@ public interface WebService {
          Request baseRequest,
          HttpServletRequest httpRequest,
          HttpServletResponse httpResponse)
-         throws IOException;
+         throws MssException;
 
 
    public int delete(
@@ -49,5 +51,11 @@ public interface WebService {
          Request baseRequest,
          HttpServletRequest httpRequest,
          HttpServletResponse httpResponse)
-         throws IOException;
+         throws MssException;
+
+
+   public String getPath();
+
+
+   public void setConfig(ConfigFile c);
 }

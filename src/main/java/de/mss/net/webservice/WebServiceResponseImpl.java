@@ -1,4 +1,4 @@
-package de.mss.webservice;
+package de.mss.net.webservice;
 
 
 public abstract class WebServiceResponseImpl implements WebServiceResponse {

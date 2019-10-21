@@ -1,7 +1,12 @@
-package de.mss.webservice;
+package de.mss.net.webservice;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.jetty.server.Connector;
@@ -17,7 +22,7 @@ public abstract class WebServiceServer {
    private Integer         port      = null;
    private ConfigFile      cfg       = null;
 
-   private Logger          logger    = null;
+   private static Logger   logger    = null;
 
 
    protected abstract void initApplication();
@@ -85,11 +90,16 @@ public abstract class WebServiceServer {
    }
 
 
-   public Logger getLogger() {
-      if (this.logger == null)
-         this.logger = LogManager.getLogger("default");
+   public static Logger getLogger() {
+      if (logger == null)
+         logger = LogManager.getLogger("default");
 
-      return this.logger;
+      return logger;
+   }
+
+
+   public static void setLogger(Logger l) {
+      logger = l;
    }
 
 
@@ -107,7 +117,7 @@ public abstract class WebServiceServer {
       this.server.setHandler(handler);
 
       this.server.start();
-      getLogger().info("Server is running on " + ip + ":" + this.port.toString());
+      getLogger().info("Server is running on {} : {}", ip, this.port);
    }
 
 
@@ -124,4 +134,64 @@ public abstract class WebServiceServer {
       getLogger().debug("Server stopped");
    }
 
+
+   protected Map<String, WebService> loadWebServices(ClassLoader cl, String packageName) {
+      Map<String, WebService> list = new HashMap<>();
+
+      String dottedName = getDottedName(packageName);
+      String slashedName = getSlashedName(packageName);
+
+      try (BufferedReader br = new BufferedReader(new InputStreamReader(cl.getResource(slashedName).openStream()))) {
+         String line = null;
+         while ((line = br.readLine()) != null) {
+            WebService w = loadWebService(dottedName, line);
+            if (w != null) {
+               String log = String.format("loading %s for /v1%s", w.getClass().getName(), w.getPath());
+               w.setConfig(getConfigFile());
+               getLogger().debug(log);
+               list.put("/v1" + w.getPath(), w);
+            }
+         }
+      }
+      catch (IOException e) {
+         getLogger().error("error while walking package " + packageName, e);
+      }
+
+      return list;
+   }
+
+
+   private WebService loadWebService(String packageName, String line) {
+      if (!line.endsWith(".class"))
+         return null;
+
+      String name = line.substring(0, line.length() - 6);
+      try {
+         Class<?> clazz = Class.forName(packageName + "." + name);
+         Object c = clazz.newInstance();
+         if (WebService.class.isInstance(c))
+            return (WebService)c;
+      }
+      catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+         getLogger().log(Level.OFF, "exception while checking package", e);
+      }
+
+      return null;
+   }
+
+
+   private String getDottedName(String packageName) {
+      if (packageName.indexOf('/') < 0)
+         return packageName;
+
+      return packageName.replaceAll("\\/", "\\.");
+   }
+
+
+   private String getSlashedName(String packageName) {
+      if (packageName.indexOf('.') < 0)
+         return packageName;
+
+      return packageName.replaceAll("\\.", "\\/");
+   }
 }

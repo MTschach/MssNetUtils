@@ -1,6 +1,5 @@
-package de.mss.webservice;
+package de.mss.net.webservice;
 
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.HashMap;
@@ -12,13 +11,28 @@ import javax.ws.rs.HttpMethod;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.Marker;
+import org.apache.logging.log4j.MarkerManager;
 import org.eclipse.jetty.server.Request;
 
-public class WebServiceBase implements WebService {
+import de.mss.configtools.ConfigFile;
+import de.mss.utils.exception.MssException;
+
+
+public abstract class WebServiceBase implements WebService {
 
    static Logger    baseLogger = LogManager.getLogger("default");
 
-   protected Logger      logger     = baseLogger;
+   protected Logger logger     = baseLogger;
+
+   protected ConfigFile cfg;
+
+
+   @Override
+   public void setConfig(ConfigFile c) {
+      this.cfg = c;
+   }
+
 
    @Override
    public boolean handleRequest(
@@ -29,42 +43,47 @@ public class WebServiceBase implements WebService {
          HttpServletRequest httpRequest,
          HttpServletResponse httpResponse) {
 
-      getLogger().debug(de.mss.utils.Tools.formatLoggingId(loggingId) + "handling request " + target);
+      Marker m = MarkerManager.getMarker(de.mss.utils.Tools.formatLoggingId(loggingId));
+      getLogger().debug(m, "handling request {}", target);
+
       de.mss.utils.StopWatch s = new de.mss.utils.StopWatch();
 
       int httpStatusCode = HttpServletResponse.SC_NOT_FOUND;
 
       try {
-      switch (baseRequest.getMethod()) {
-         case HttpMethod.DELETE:
+         switch (httpRequest.getMethod()) {
+            case HttpMethod.DELETE:
                httpStatusCode = delete(loggingId, pathParams, baseRequest, httpRequest, httpResponse);
-            break;
-         case HttpMethod.GET:
-            httpStatusCode = get(loggingId, pathParams, baseRequest, httpRequest, httpResponse);
-            break;
-         case HttpMethod.PATCH:
-            httpStatusCode = patch(loggingId, pathParams, baseRequest, httpRequest, httpResponse);
-            break;
-         case HttpMethod.POST:
-            httpStatusCode = post(loggingId, pathParams, baseRequest, httpRequest, httpResponse);
-            break;
+               break;
+            case HttpMethod.GET:
+               httpStatusCode = get(loggingId, pathParams, baseRequest, httpRequest, httpResponse);
+               break;
+            case HttpMethod.PATCH:
+               httpStatusCode = patch(loggingId, pathParams, baseRequest, httpRequest, httpResponse);
+               break;
+            case HttpMethod.POST:
+               httpStatusCode = post(loggingId, pathParams, baseRequest, httpRequest, httpResponse);
+               break;
 
-         default:
+            default:
                httpStatusCode = HttpServletResponse.SC_NOT_FOUND;
-            break;
+               break;
+         }
       }
-      }
-      catch (IOException e) {
-         getLogger().error(de.mss.utils.Tools.formatLoggingId(loggingId), e);
+      catch (MssException e) {
+         httpStatusCode = handleException(loggingId, e, httpResponse);
       }
 
       httpResponse.setStatus(httpStatusCode);
       s.stop();
-      getLogger().debug(de.mss.utils.Tools.formatLoggingId(loggingId) + "response " + httpResponse);
-      getLogger().debug(de.mss.utils.Tools.formatLoggingId(loggingId) + "end handling request + " + target + " [took " + s.getDuration() + "ms]");
+      getLogger().debug(m, "response {}", httpResponse);
+      getLogger().debug(m, "end handling request {} [took {}ms]", target, Long.valueOf(s.getDuration()));
 
       return true;
    }
+
+
+   protected abstract int handleException(String loggingId, MssException e, HttpServletResponse httpResponse);
 
 
    protected Logger getLogger() {
@@ -87,7 +106,7 @@ public class WebServiceBase implements WebService {
          Request baseRequest,
          HttpServletRequest httpRequest,
          HttpServletResponse httpResponse)
-         throws IOException {
+         throws MssException {
       return HttpServletResponse.SC_NOT_FOUND;
    }
 
@@ -99,7 +118,7 @@ public class WebServiceBase implements WebService {
          Request baseRequest,
          HttpServletRequest httpRequest,
          HttpServletResponse httpResponse)
-         throws IOException {
+         throws MssException {
       return HttpServletResponse.SC_NOT_FOUND;
    }
 
@@ -111,7 +130,7 @@ public class WebServiceBase implements WebService {
          Request baseRequest,
          HttpServletRequest httpRequest,
          HttpServletResponse httpResponse)
-         throws IOException {
+         throws MssException {
       return HttpServletResponse.SC_NOT_FOUND;
    }
 
@@ -123,7 +142,7 @@ public class WebServiceBase implements WebService {
          Request baseRequest,
          HttpServletRequest httpRequest,
          HttpServletResponse httpResponse)
-         throws IOException {
+         throws MssException {
       return HttpServletResponse.SC_NOT_FOUND;
    }
 
@@ -131,8 +150,8 @@ public class WebServiceBase implements WebService {
    protected Map<String, String> getUrlParams(Request request) throws UnsupportedEncodingException {
       Map<String, String> ret = new HashMap<>();
 
-      if (request != null && request.getOriginalURI() != null && request.getOriginalURI().indexOf("?") > 0) {
-         String[] params = request.getOriginalURI().substring(request.getOriginalURI().indexOf("?") + 1).split("&");
+      if (request != null && request.getRequestURI() != null && request.getRequestURI().indexOf('?') >= 0) {
+         String[] params = request.getRequestURI().substring(request.getRequestURI().indexOf('?') + 1).split("&");
          for (String keyValue : params) {
             String[] kv = keyValue.split("=");
             ret.put(kv[0], URLDecoder.decode(kv[1], "application/x-www-form-urlencoded"));

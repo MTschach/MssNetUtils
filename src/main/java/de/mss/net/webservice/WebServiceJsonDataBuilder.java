@@ -1,4 +1,4 @@
-package de.mss.webservice;
+package de.mss.net.webservice;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -6,6 +6,7 @@ import java.lang.reflect.InvocationTargetException;
 
 import org.apache.commons.beanutils.BeanUtils;
 import org.codehaus.jackson.map.ObjectMapper;
+
 
 public class WebServiceJsonDataBuilder<T extends Object> extends WebServiceDataBuilder<T> {
 
@@ -28,14 +29,12 @@ public class WebServiceJsonDataBuilder<T extends Object> extends WebServiceDataB
       if (clazz == null || field == null || value == null)
          return;
 
-      //      Method m = getSetMethod(clazz, field.getName());
-      //
-      //      if (m == null)
-      //         return;
-
       BeanUtils.setProperty(clazz, field.getName(), restObjMapper.readValue(value, field.getType()));
-
-      //      m.invoke(clazz.getClass(), restObjMapper.readValue(value, field.getType()));
    }
 
+
+   @Override
+   public String writeData(T clazz) throws IOException {
+      return restObjMapper.writeValueAsString(clazz);
+   }
 }

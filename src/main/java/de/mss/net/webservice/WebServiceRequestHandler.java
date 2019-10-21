@@ -1,4 +1,4 @@
-package de.mss.webservice;
+package de.mss.net.webservice;
 
 import java.io.IOException;
 import java.util.Enumeration;
@@ -13,6 +13,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
+
 
 public class WebServiceRequestHandler extends AbstractHandler {
 

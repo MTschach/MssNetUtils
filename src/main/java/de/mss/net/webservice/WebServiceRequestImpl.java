@@ -1,4 +1,4 @@
-package de.mss.webservice;
+package de.mss.net.webservice;
 
 
 public abstract class WebServiceRequestImpl implements WebServiceRequest {
@@ -10,5 +10,11 @@ public abstract class WebServiceRequestImpl implements WebServiceRequest {
    @Override
    public void setLoggingId(String l) {
       this.loggingId = l;
+   }
+
+
+   @Override
+   public String getLoggingId() {
+      return this.loggingId;
    }
 }

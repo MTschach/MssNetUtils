@@ -1,7 +1,8 @@
-package de.mss.webservice;
+package de.mss.net.webservice;
 
+import java.io.Serializable;
 
-public interface WebServiceResponse extends WebServiceTransferObject {
+public interface WebServiceResponse extends Serializable {
 
    public void setErrorCode(Integer e);
 
