@@ -64,7 +64,7 @@ dependencies {
 
 
 	testCompile group: 'junit'                                                 , name: 'junit'                     , version: 'latest.release'
-	testCompile group: 'org.easymock'                                          , name: 'easymock'                  , version: '2.5'
+	testCompile group: 'org.easymock'                                          , name: 'easymock'                  , version: 'latest.release'
 }
 
 //create a single Jar with all dependencies
