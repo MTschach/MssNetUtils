@@ -10,12 +10,14 @@ import java.util.List;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.http.HttpHost;
 import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.Test;
 
+import de.mss.net.rest.HttpClientFactory;
 import de.mss.net.rest.RestMethod;
 import de.mss.net.rest.RestRequest;
 import de.mss.net.rest.RestServer;
@@ -150,12 +152,18 @@ public class WebServiceCallerTest extends TestCase{
       Capture<HttpHost> captureHost = EasyMock.newCapture();
       Capture<HttpUriRequest> captureRequest = EasyMock.newCapture();
 
-      CloseableHttpClient httpClientMock = EasyMock
-            .createMockBuilder(CloseableHttpClient.class)
-            .addMockedMethod("execute", HttpHost.class, HttpUriRequest.class)
-            .createMock();
+      CloseableHttpResponse httpResponseMock = EasyMock.createMock(CloseableHttpResponse.class);
+      httpResponseMock.close();
+      EasyMock.expectLastCall().anyTimes();
+      
+      CloseableHttpClient httpClientMock = EasyMock.createMock(CloseableHttpClient.class);
+      EasyMock.expect(httpClientMock.execute(EasyMock.capture(captureHost), EasyMock.capture(captureRequest))).andReturn(httpResponseMock);
+      httpClientMock.close();
+      EasyMock.expectLastCall().anyTimes();
 
-      EasyMock.expect(httpClientMock.execute(EasyMock.capture(captureHost), EasyMock.capture(captureRequest))).andReturn(null);
+      HttpClientFactory.initializeHttpClientFactory(httpClientMock);
+
+      EasyMock.replay(httpClientMock, httpResponseMock);
 
       WebServiceTestResponse response = caller
             .call(loggingId, setUpRestServers(1), "/v1/customer/{customerNumber}/info", RestMethod.PATCH, this.request, 1);

@@ -12,17 +12,11 @@ import java.util.Map;
 
 import org.apache.http.Header;
 import org.apache.http.HttpHost;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
-import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.client.HttpClients;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -110,7 +104,7 @@ public class RestExecutor {
       getLogger().debug(de.mss.utils.Tools.formatLoggingId(loggingId) + "executing request to " + server.getServer().getCompleteUrl());
       de.mss.utils.StopWatch stopWatch = new de.mss.utils.StopWatch();
       
-      try (CloseableHttpClient httpClient = getClientBuilder(server).build()) {
+      try (CloseableHttpClient httpClient = HttpClientFactory.getHttpClient(server)) {
          RestResponse response = executeWithRetry(loggingId, httpClient, request, server, 3);
          stopWatch.stop();
          getLogger()
@@ -237,32 +231,6 @@ public class RestExecutor {
          default:
             return false;
       }
-   }
-
-
-   private HttpClientBuilder getClientBuilder(RestServer server) {
-      HttpClientBuilder clientBuilder = HttpClients.custom();
-
-      clientBuilder = applyProxy(clientBuilder, server.getProxy());
-
-      return clientBuilder;
-   }
-
-
-   private HttpClientBuilder applyProxy(HttpClientBuilder clientBuilder, AuthenticatedServer proxy) {
-      HttpClientBuilder retBuilder = clientBuilder;
-
-      if (proxy != null && Tools.isSet(proxy.getUser()) && Tools.isSet(proxy.getPassword())) {
-         CredentialsProvider credsProvider = new BasicCredentialsProvider();
-         credsProvider
-               .setCredentials(
-                     new AuthScope(proxy.getHost(), proxy.getPort().intValue()),
-                     new UsernamePasswordCredentials(proxy.getUser(), proxy.getPassword()));
-
-         retBuilder = retBuilder.setDefaultCredentialsProvider(credsProvider);
-      }
-
-      return retBuilder;
    }
 
 

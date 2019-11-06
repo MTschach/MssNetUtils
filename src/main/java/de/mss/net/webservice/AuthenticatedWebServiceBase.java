@@ -10,7 +10,7 @@ import org.eclipse.jetty.server.Request;
 
 import de.mss.utils.exception.MssException;
 
-public abstract class AuthenticatedWebServiceBase extends WebServiceBase {
+public abstract class AuthenticatedWebServiceBase extends WebService {
 
    @Override
    public boolean handleRequest(

@@ -3,7 +3,7 @@ import javax.ws.rs.HeaderParam;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 
-public class WebServiceTestRequest extends WebServiceRequestImpl {
+public class WebServiceTestRequest extends WebServiceRequest {
 
    @HeaderParam(value = "sessionId")
    public String         sessionId;

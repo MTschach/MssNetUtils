@@ -21,8 +21,7 @@ public class WebServiceJsonCaller<T extends WebServiceRequest, R extends WebServ
 
    @Override
    protected void addPostParams(RestRequest restRequest, WebServiceRequest request, Field[] fields)
-         throws IllegalAccessException,
-         MssException {
+         throws MssException {
       for (Field field : fields) {
          if (field.isAnnotationPresent(BodyParam.class)) {
             String paramName = field.getAnnotationsByType(BodyParam.class)[0].value();
@@ -31,7 +30,7 @@ public class WebServiceJsonCaller<T extends WebServiceRequest, R extends WebServ
                if (value != null)
                   restRequest.addPostParam(paramName, restObjMapper.writeValueAsString(value));
             }
-            catch (IOException | InvocationTargetException | NoSuchMethodException e) {
+            catch (IOException | InvocationTargetException | NoSuchMethodException | IllegalAccessException e) {
                throw new MssException(
                      de.mss.net.exception.ErrorCodes.ERROR_NOT_MAPPABLE,
                      e,
@@ -54,15 +53,6 @@ public class WebServiceJsonCaller<T extends WebServiceRequest, R extends WebServ
       catch (IOException e) {
          throw new MssException(de.mss.net.exception.ErrorCodes.ERROR_NOT_PARSABLE, e);
       }
-
-      return response;
-   }
-
-
-   @Override
-   protected R parseBinaryContent(byte[] content) throws MssException {
-      R response = null;
-
 
       return response;
    }

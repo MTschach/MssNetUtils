@@ -2,7 +2,7 @@ package de.mss.net.webservice;
 
 import java.util.List;
 
-public class WebServiceTestResponse extends WebServiceResponseImpl {
+public class WebServiceTestResponse extends WebServiceResponse {
 
    /**
     * 

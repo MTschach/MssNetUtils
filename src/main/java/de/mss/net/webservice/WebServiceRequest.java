@@ -1,11 +1,31 @@
 package de.mss.net.webservice;
 
-import java.io.Serializable;
+import javax.ws.rs.HeaderParam;
 
-public interface WebServiceRequest extends Serializable {
+public abstract class WebServiceRequest implements java.io.Serializable {
 
-   public void setLoggingId(String l);
+   private static final long serialVersionUID = 7666097603777732487L;
+
+   @HeaderParam(value = "loggingId")
+   private String            loggingId        = null;
+
+   public void setLoggingId(String l) {
+      this.loggingId = l;
+   }
 
 
-   public String getLoggingId();
+   public String getLoggingId() {
+      return this.loggingId;
+   }
+
+
+   @Override
+   public String toString() {
+      StringBuilder sb = new StringBuilder();
+
+      if (this.loggingId != null)
+         sb.append("loggingId: " + this.loggingId);
+
+      return sb.toString();
+   }
 }

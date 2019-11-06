@@ -3,6 +3,7 @@ package de.mss.net.webservice;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.ParameterizedType;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URLEncoder;
@@ -34,25 +35,18 @@ public abstract class WebServiceCaller<T extends WebServiceRequest, R extends We
 
    private static Logger logger     = null;
 
-   protected abstract void addPostParams(RestRequest restRequest, T request, Field[] fields) throws IllegalAccessException, MssException;
+   protected abstract void addPostParams(RestRequest restRequest, T request, Field[] fields) throws MssException;
 
 
    protected abstract R parseContent(String content) throws MssException;
 
 
-   protected abstract R parseBinaryContent(byte[] content) throws MssException;
-
-
    public R call(String loggingId, RestServer[] servers, String url, RestMethod method, T request, int maxRetries)
-         throws IllegalAccessException,
-         InvocationTargetException,
-         NoSuchMethodException,
-         MssException {
+         throws MssException {
 
       Field[] fields = FieldUtils.getAllFields(request.getClass());
       RestRequest restRequest = getRestRequest(method, request, fields);
       String finalUrl = prepareUrl(url, request, fields);
-
 
       for (RestServer server : servers)
          try {
@@ -70,7 +64,14 @@ public abstract class WebServiceCaller<T extends WebServiceRequest, R extends We
 
       server.getServer().setUrl(url);
       RestExecutor exec = new RestExecutor(server);
-      RestResponse resp = exec.executeRequest(loggingId, restRequest, null);
+      int tries = maxRetries;
+      RestResponse resp = null;
+      do {
+         resp = exec.executeRequest(loggingId, restRequest, null);
+         tries-- ;
+         sleep(250);
+      }
+      while (tries > 0 && (resp == null || resp.getHttpStatus() != HttpServletResponse.SC_OK));
 
       if (resp == null)
          throw new MssException(de.mss.net.exception.ErrorCodes.ERROR_NO_RESPONSE, "no response received");
@@ -85,18 +86,37 @@ public abstract class WebServiceCaller<T extends WebServiceRequest, R extends We
       if (resp.getContent() != null)
          response = parseContent(resp.getContent());
 
-      if (response == null && resp.getBinaryContent() != null)
-         response = parseBinaryContent(resp.getBinaryContent());
+      if (response == null) {
+         @SuppressWarnings("unchecked")
+         Class<R> clazz = ((Class<R>)((ParameterizedType)getClass().getGenericSuperclass()).getActualTypeArguments()[0]);
+         try {
+            response = clazz.newInstance();
+         }
+         catch (InstantiationException | IllegalAccessException e) {
+            throw new MssException(de.mss.net.exception.ErrorCodes.ERROR_NOT_PARSABLE, e);
+         }
+      }
+      
+      if (resp.getBinaryContent() != null)
+         response.setBinaryContent(resp.getBinaryContent());
 
       return response;
    }
 
 
+   protected void sleep(long millies) {
+      try {
+         Thread.sleep(millies);
+      }
+      catch (InterruptedException e) {
+         getLogger().debug("error while callinig rest server", e);
+         Thread.currentThread().interrupt();
+      }
+   }
+
+
    protected RestRequest getRestRequest(RestMethod method, T request, Field[] fields)
-         throws IllegalAccessException,
-         InvocationTargetException,
-         NoSuchMethodException,
-         MssException {
+         throws MssException {
       RestRequest req = new RestRequest(method);
 
       for (Field field : fields) {
@@ -114,7 +134,7 @@ public abstract class WebServiceCaller<T extends WebServiceRequest, R extends We
    }
 
 
-   protected String prepareUrl(String url, T request, Field[] fields) throws MssException {
+   protected String prepareUrl(String url, T request, Field[] fields) {
       String ret = url;
       StringBuilder urlParams = new StringBuilder();
 
