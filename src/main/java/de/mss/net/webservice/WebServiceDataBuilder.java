@@ -6,6 +6,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.util.Map;
 
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
+
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang3.reflect.FieldUtils;
 
@@ -28,22 +32,33 @@ public abstract class WebServiceDataBuilder<T extends Object> {
 
       Field[] fields = FieldUtils.getAllFields(clazz.getClass());
       for (Field field : fields) {
+         
+         String fieldName = field.getName();
+         if (field.isAnnotationPresent(PathParam.class))
+            fieldName = field.getAnnotationsByType(PathParam.class)[0].value();
+         else if (field.isAnnotationPresent(QueryParam.class))
+            fieldName = field.getAnnotationsByType(QueryParam.class)[0].value();
+         else if (field.isAnnotationPresent(HeaderParam.class))
+             fieldName = field.getAnnotationsByType(HeaderParam.class)[0].value();
+         else if (field.isAnnotationPresent(BodyParam.class))
+             fieldName = field.getAnnotationsByType(BodyParam.class)[0].value();
+
          if (field.getType().isAssignableFrom(String.class))
-            BeanUtils.setProperty(ret, field.getName(), params.get(field.getName()));
+            BeanUtils.setProperty(ret, field.getName(), params.get(fieldName));
          else if (field.getType().isAssignableFrom(Boolean.class))
-            BeanUtils.setProperty(ret, field.getName(), params.get(field.getName()));
+            BeanUtils.setProperty(ret, field.getName(), params.get(fieldName));
          else if (field.getType().isAssignableFrom(BigDecimal.class))
-            BeanUtils.setProperty(ret, field.getName(), params.get(field.getName()));
+            BeanUtils.setProperty(ret, field.getName(), params.get(fieldName));
          else if (field.getType().isAssignableFrom(Double.class))
-            BeanUtils.setProperty(ret, field.getName(), params.get(field.getName()));
+            BeanUtils.setProperty(ret, field.getName(), params.get(fieldName));
          else if (field.getType().isAssignableFrom(Float.class))
-            BeanUtils.setProperty(ret, field.getName(), params.get(field.getName()));
+            BeanUtils.setProperty(ret, field.getName(), params.get(fieldName));
          else if (field.getType().isAssignableFrom(Integer.class))
-            BeanUtils.setProperty(ret, field.getName(), params.get(field.getName()));
+            BeanUtils.setProperty(ret, field.getName(), params.get(fieldName));
          else if (field.getType().isAssignableFrom(java.util.Date.class))
-            BeanUtils.setProperty(ret, field.getName(), params.get(field.getName()));
+            BeanUtils.setProperty(ret, field.getName(), params.get(fieldName));
          else
-            setOtherValue(ret, field, params.get(field.getName()));
+            setOtherValue(ret, field, params.get(fieldName));
       }
 
       return ret;

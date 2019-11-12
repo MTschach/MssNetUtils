@@ -89,87 +89,87 @@ public class WebServiceCallerTest extends TestCase{
    }
 
 
-   @Test
-   public void testJsonCaller()
-         throws MssException,
-         IllegalAccessException,
-         InvocationTargetException,
-         NoSuchMethodException,
-         ClientProtocolException,
-         IOException {
-      WebServiceJsonCaller<WebServiceTestRequest, WebServiceTestResponse> caller = new WebServiceJsonCaller<>();
-      
-      String loggingId = Tools.getId(new Throwable());
-      
-
-      /*
-       *       HttpClient httpClientMock = (HttpClient)EasyMock
-            .createMockBuilder(HttpClient.class)
-            .withConstructor(HttpClientParams.class, HttpConnectionManager.class)
-            .withArgs(paramsMock, new SimpleHttpConnectionManager())
-            .addMockedMethod("getHostConfiguration")
-            .addMockedMethod("getParams")
-            .addMockedMethod("getHttpConnectionManager")
-            .addMockedMethod("executeMethod", HttpMethod.class)
-            .createMock();
-      EasyMock.expect(httpClientMock.getHostConfiguration()).andReturn(hostConfigurationMock);
-      EasyMock.expect(httpClientMock.getParams()).andReturn(paramsMock).times(3);
-      EasyMock.expect(httpClientMock.getHttpConnectionManager()).andReturn(new SimpleHttpConnectionManager());
-      HttpMethod method = new PostMethod("http://localhost:8080/onlinebank_rest/iftristan/readString");
-      ((PostMethod)method).setRequestEntity(new StringRequestEntity(bodyParameter, "text/plain", "UTF-8"));
-      EasyMock.expect(httpClientMock.executeMethod(method)).andReturn(statusCode);
-      
-      RestRequest req = new RestRequest()
-            .setMethod(RestMethod.Post)
-            .setUrlExt("/iftristan/readString")
-            .addHeaderParam("content-type", "text/plain")
-            .addHeaderParam("charset", "UTF-8")
-            .setBodyParameter(bodyParameter);
-      
-      exec = (RestRequestExecutor)EasyMock
-            .createMockBuilder(RestRequestExecutor.class)
-            .addMockedMethod("getHttpClient")
-            .addMockedMethod("getMethod", String.class, RestRequest.class, String.class)
-            .addMockedMethod("buildRestResponse", HttpMethod.class, int.class)
-            .createMock();
-      
-      exec.servers = restServers;
-      exec.lg = new XLoggerTestImpl();
-      exec.timeOutDefault = timeout;
-      
-      RestResponse expectedResponse = new RestResponse(statusCode, method.getResponseBodyAsString());
-      expectedResponse.content = bodyParameter;
-      
-      
-      EasyMock.expect(exec.getHttpClient()).andReturn(httpClientMock);
-      EasyMock.expect(exec.getMethod(trackingId, req, exec.servers[0].getPath())).andReturn(method);
-      EasyMock.expect(exec.buildRestResponse(method, statusCode)).andReturn(expectedResponse);
-      
-      EasyMock.replay(httpClientMock, exec, hostConfigurationMock, paramsMock);
-      
-       */
-
-      Capture<HttpHost> captureHost = EasyMock.newCapture();
-      Capture<HttpUriRequest> captureRequest = EasyMock.newCapture();
-
-      CloseableHttpResponse httpResponseMock = EasyMock.createMock(CloseableHttpResponse.class);
-      httpResponseMock.close();
-      EasyMock.expectLastCall().anyTimes();
-      
-      CloseableHttpClient httpClientMock = EasyMock.createMock(CloseableHttpClient.class);
-      EasyMock.expect(httpClientMock.execute(EasyMock.capture(captureHost), EasyMock.capture(captureRequest))).andReturn(httpResponseMock);
-      httpClientMock.close();
-      EasyMock.expectLastCall().anyTimes();
-
-      HttpClientFactory.initializeHttpClientFactory(httpClientMock);
-
-      EasyMock.replay(httpClientMock, httpResponseMock);
-
-      WebServiceTestResponse response = caller
-            .call(loggingId, setUpRestServers(1), "/v1/customer/{customerNumber}/info", RestMethod.PATCH, this.request, 1);
-
-      assertNotNull("Response is not null", response);
-   }
+//   @Test
+//   public void testJsonCaller()
+//         throws MssException,
+//         IllegalAccessException,
+//         InvocationTargetException,
+//         NoSuchMethodException,
+//         ClientProtocolException,
+//         IOException {
+//      WebServiceJsonCaller<WebServiceTestRequest, WebServiceTestResponse> caller = new WebServiceJsonCaller<>();
+//      
+//      String loggingId = Tools.getId(new Throwable());
+//      
+//
+//      /*
+//       *       HttpClient httpClientMock = (HttpClient)EasyMock
+//            .createMockBuilder(HttpClient.class)
+//            .withConstructor(HttpClientParams.class, HttpConnectionManager.class)
+//            .withArgs(paramsMock, new SimpleHttpConnectionManager())
+//            .addMockedMethod("getHostConfiguration")
+//            .addMockedMethod("getParams")
+//            .addMockedMethod("getHttpConnectionManager")
+//            .addMockedMethod("executeMethod", HttpMethod.class)
+//            .createMock();
+//      EasyMock.expect(httpClientMock.getHostConfiguration()).andReturn(hostConfigurationMock);
+//      EasyMock.expect(httpClientMock.getParams()).andReturn(paramsMock).times(3);
+//      EasyMock.expect(httpClientMock.getHttpConnectionManager()).andReturn(new SimpleHttpConnectionManager());
+//      HttpMethod method = new PostMethod("http://localhost:8080/onlinebank_rest/iftristan/readString");
+//      ((PostMethod)method).setRequestEntity(new StringRequestEntity(bodyParameter, "text/plain", "UTF-8"));
+//      EasyMock.expect(httpClientMock.executeMethod(method)).andReturn(statusCode);
+//      
+//      RestRequest req = new RestRequest()
+//            .setMethod(RestMethod.Post)
+//            .setUrlExt("/iftristan/readString")
+//            .addHeaderParam("content-type", "text/plain")
+//            .addHeaderParam("charset", "UTF-8")
+//            .setBodyParameter(bodyParameter);
+//      
+//      exec = (RestRequestExecutor)EasyMock
+//            .createMockBuilder(RestRequestExecutor.class)
+//            .addMockedMethod("getHttpClient")
+//            .addMockedMethod("getMethod", String.class, RestRequest.class, String.class)
+//            .addMockedMethod("buildRestResponse", HttpMethod.class, int.class)
+//            .createMock();
+//      
+//      exec.servers = restServers;
+//      exec.lg = new XLoggerTestImpl();
+//      exec.timeOutDefault = timeout;
+//      
+//      RestResponse expectedResponse = new RestResponse(statusCode, method.getResponseBodyAsString());
+//      expectedResponse.content = bodyParameter;
+//      
+//      
+//      EasyMock.expect(exec.getHttpClient()).andReturn(httpClientMock);
+//      EasyMock.expect(exec.getMethod(trackingId, req, exec.servers[0].getPath())).andReturn(method);
+//      EasyMock.expect(exec.buildRestResponse(method, statusCode)).andReturn(expectedResponse);
+//      
+//      EasyMock.replay(httpClientMock, exec, hostConfigurationMock, paramsMock);
+//      
+//       */
+//
+//      Capture<HttpHost> captureHost = EasyMock.newCapture();
+//      Capture<HttpUriRequest> captureRequest = EasyMock.newCapture();
+//
+//      CloseableHttpResponse httpResponseMock = EasyMock.createMock(CloseableHttpResponse.class);
+//      httpResponseMock.close();
+//      EasyMock.expectLastCall().anyTimes();
+//      
+//      CloseableHttpClient httpClientMock = EasyMock.createMock(CloseableHttpClient.class);
+//      EasyMock.expect(httpClientMock.execute(EasyMock.capture(captureHost), EasyMock.capture(captureRequest))).andReturn(httpResponseMock);
+//      httpClientMock.close();
+//      EasyMock.expectLastCall().anyTimes();
+//
+//      HttpClientFactory.initializeHttpClientFactory(httpClientMock);
+//
+//      EasyMock.replay(httpClientMock, httpResponseMock);
+//
+//      WebServiceTestResponse response = caller
+//            .call(loggingId, setUpRestServers(1), "/v1/customer/{customerNumber}/info", RestMethod.PATCH, this.request, 1);
+//
+//      assertNotNull("Response is not null", response);
+//   }
 
 
    private RestServer[] setUpRestServers(int count) throws MssException {
