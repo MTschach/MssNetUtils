@@ -11,14 +11,21 @@ public class WebServiceTestRequest extends WebServiceRequest {
    @PathParam(value = "customerNumber")
    public Integer        customerNumber;
 
+   @PathParam(value = "username")
+   public String         userName;
+
    @QueryParam(value = "name")
    public String         name;
+
+   @QueryParam(value = "checkinterval")
+   public Integer        checkInterval;
 
    @QueryParam(value = "birthdate")
    public java.util.Date birthdate;
 
    @BodyParam(value = "body")
    public WebServiceBody body;
+
 
 
    public String getSessionId() {
@@ -45,4 +52,13 @@ public class WebServiceTestRequest extends WebServiceRequest {
       return this.body;
    }
 
+
+   public String getUserName() {
+      return this.userName;
+   }
+
+
+   public Integer getCheckInterval() {
+      return this.checkInterval;
+   }
 }

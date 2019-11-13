@@ -3,12 +3,13 @@ package de.mss.net.webservice;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.ParameterizedType;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.HeaderParam;
@@ -31,38 +32,56 @@ import de.mss.utils.exception.MssException;
 
 public abstract class WebServiceCaller<T extends WebServiceRequest, R extends WebServiceResponse> {
 
-   private String dateFormat = "yyyyMMdd'T'HHmmssSSSZ";
+   private String        dateFormat = "yyyyMMdd'T'HHmmssSSSZ";
 
    private static Logger logger     = null;
 
-   protected abstract void addPostParams(RestRequest restRequest, T request, Field[] fields) throws MssException;
+   protected abstract void addPostParams(RestRequest restRequest, T request, List<Field> fields) throws MssException;
 
 
-   protected abstract R parseContent(String content) throws MssException;
+   protected abstract R parseContent(String content, R response) throws MssException;
 
 
-   public R call(String loggingId, RestServer[] servers, String url, RestMethod method, T request, int maxRetries)
+   public R call(String loggingId, RestServer[] servers, String url, RestMethod method, T request, R responseClass, int maxRetries)
          throws MssException {
 
-      Field[] fields = FieldUtils.getAllFields(request.getClass());
+      List<Field> fields = getCallableFields(request.getClass());
       RestRequest restRequest = getRestRequest(method, request, fields);
-      String finalUrl = prepareUrl(url, request, fields);
+      restRequest.setUrl(prepareUrl(url, request, fields));
+
+      R response = responseClass;
+
+      if (response == null)
+         return null;
+
 
       for (RestServer server : servers)
          try {
-            return call(loggingId, server, restRequest, finalUrl, maxRetries);
+            return call(loggingId, server, restRequest, responseClass, maxRetries);
          }
          catch (MssException e) {
             getLogger().debug("error while callinig rest server", e);
+            response.setErrorCode(Integer.valueOf(e.getAltErrorCode() != 0 ? e.getAltErrorCode() : e.getError().getErrorCode()));
+            response.setErrorText(e.getAltErrorText() != null ? e.getAltErrorText() : e.getError().getErrorText());
+            response.setStatusCode(Integer.valueOf(HttpServletResponse.SC_BAD_REQUEST));
          }
 
-      return null;
+      return response;
    }
 
 
-   private R call(String loggingId, RestServer server, RestRequest restRequest, String url, int maxRetries) throws MssException {
+   private List<Field> getCallableFields(Class<? extends WebServiceRequest> clazz) {
+      List<Field> ret = new ArrayList<>();
+      for (Field f : FieldUtils.getAllFieldsList(clazz))
+         if (!java.lang.reflect.Modifier.isStatic(f.getModifiers()))
+            ret.add(f);
 
-      server.getServer().setUrl(url);
+      return ret;
+   }
+
+
+   private R call(String loggingId, RestServer server, RestRequest restRequest, R responseClass, int maxRetries) throws MssException {
+
       RestExecutor exec = new RestExecutor(server);
       int tries = maxRetries;
       RestResponse resp = null;
@@ -84,21 +103,16 @@ public abstract class WebServiceCaller<T extends WebServiceRequest, R extends We
       R response = null;
 
       if (resp.getContent() != null)
-         response = parseContent(resp.getContent());
+         response = parseContent(resp.getContent(), responseClass);
 
       if (response == null) {
-         @SuppressWarnings("unchecked")
-         Class<R> clazz = ((Class<R>)((ParameterizedType)getClass().getGenericSuperclass()).getActualTypeArguments()[0]);
-         try {
-            response = clazz.newInstance();
-         }
-         catch (InstantiationException | IllegalAccessException e) {
-            throw new MssException(de.mss.net.exception.ErrorCodes.ERROR_NOT_PARSABLE, e);
-         }
+         response = responseClass;
       }
-      
+
       if (resp.getBinaryContent() != null)
          response.setBinaryContent(resp.getBinaryContent());
+
+      response.setErrorCode(Integer.valueOf(0));
 
       return response;
    }
@@ -115,7 +129,7 @@ public abstract class WebServiceCaller<T extends WebServiceRequest, R extends We
    }
 
 
-   protected RestRequest getRestRequest(RestMethod method, T request, Field[] fields)
+   protected RestRequest getRestRequest(RestMethod method, T request, List<Field> fields)
          throws MssException {
       RestRequest req = new RestRequest(method);
 
@@ -134,7 +148,7 @@ public abstract class WebServiceCaller<T extends WebServiceRequest, R extends We
    }
 
 
-   protected String prepareUrl(String url, T request, Field[] fields) {
+   protected String prepareUrl(String url, T request, List<Field> fields) {
       String ret = url;
       StringBuilder urlParams = new StringBuilder();
 

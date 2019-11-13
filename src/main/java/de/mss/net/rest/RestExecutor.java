@@ -101,7 +101,6 @@ public class RestExecutor {
       if (request == null || server == null || server.getServer() == null)
          throw new MssException(de.mss.utils.exception.ErrorCodes.ERROR_INVALID_PARAM, "some required parameter are null");
 
-      getLogger().debug(de.mss.utils.Tools.formatLoggingId(loggingId) + "executing request to " + server.getServer().getCompleteUrl());
       de.mss.utils.StopWatch stopWatch = new de.mss.utils.StopWatch();
       
       try (CloseableHttpClient httpClient = HttpClientFactory.getHttpClient(server)) {
@@ -129,10 +128,12 @@ public class RestExecutor {
       int retries = retryCount;
       HttpUriRequest req = getRequestBuilder(request, server).build();
 
+      getLogger().debug(de.mss.utils.Tools.formatLoggingId(loggingId) + "executing request to " + req.getURI().toString());
+
       HttpHost target = new HttpHost(server.getServer().getHost(), server.getServer().getPort().intValue());
       while (retries > 0) {
          retries-- ;
-         try (CloseableHttpResponse resp = httpClient.execute(target, req)) {
+         try (CloseableHttpResponse resp = httpClient.execute(req)) {
             RestResponse response = new RestResponse(resp.getStatusLine().getStatusCode());
 
             response.setContent(readContent(resp));
@@ -264,7 +265,7 @@ public class RestExecutor {
       requestBuilder = applyHeaderParams(requestBuilder, request.getHeaderParams());
       requestBuilder = applyParams(requestBuilder, request.getUrlParams());
       requestBuilder = applyParams(requestBuilder, request.getPostParams());
-      requestBuilder = applyUrlAndParams(requestBuilder, request.getUrl(), request.getUrlParams());
+      requestBuilder = applyUrlAndParams(requestBuilder, server.getServer().getCompleteUrl() + "/" + request.getUrl(), request.getUrlParams());
       
       RequestConfig conf = RequestConfig
             .custom()

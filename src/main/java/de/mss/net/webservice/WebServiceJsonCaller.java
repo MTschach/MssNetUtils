@@ -3,7 +3,7 @@ package de.mss.net.webservice;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.ParameterizedType;
+import java.util.List;
 
 import org.apache.commons.beanutils.PropertyUtils;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -20,8 +20,7 @@ public class WebServiceJsonCaller<T extends WebServiceRequest, R extends WebServ
 
 
    @Override
-   protected void addPostParams(RestRequest restRequest, WebServiceRequest request, Field[] fields)
-         throws MssException {
+   protected void addPostParams(RestRequest restRequest, T request, List<Field> fields) throws MssException {
       for (Field field : fields) {
          if (field.isAnnotationPresent(BodyParam.class)) {
             String paramName = field.getAnnotationsByType(BodyParam.class)[0].value();
@@ -42,18 +41,16 @@ public class WebServiceJsonCaller<T extends WebServiceRequest, R extends WebServ
 
 
    @Override
-   protected R parseContent(String content) throws MssException {
-      R response = null;
+   protected R parseContent(String content, R response) throws MssException {
+      R resp = null;
 
       try {
-         @SuppressWarnings("unchecked")
-         Class<R> clazz = ((Class<R>)((ParameterizedType)getClass().getGenericSuperclass()).getActualTypeArguments()[0]);
-         response = restObjMapper.readValue(content, clazz);
+         resp = (R)restObjMapper.readValue(content, response.getClass());
       }
       catch (IOException e) {
          throw new MssException(de.mss.net.exception.ErrorCodes.ERROR_NOT_PARSABLE, e);
       }
 
-      return response;
+      return resp;
    }
 }

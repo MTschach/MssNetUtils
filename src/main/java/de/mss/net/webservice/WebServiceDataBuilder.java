@@ -33,6 +33,9 @@ public abstract class WebServiceDataBuilder<T extends Object> {
       Field[] fields = FieldUtils.getAllFields(clazz.getClass());
       for (Field field : fields) {
          
+         if (java.lang.reflect.Modifier.isStatic(field.getModifiers()))
+            continue;
+
          String fieldName = field.getName();
          if (field.isAnnotationPresent(PathParam.class))
             fieldName = field.getAnnotationsByType(PathParam.class)[0].value();

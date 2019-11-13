@@ -1,6 +1,5 @@
 package de.mss.net.webservice;
 
-import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.text.SimpleDateFormat;
@@ -8,20 +7,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.lang3.reflect.FieldUtils;
-import org.apache.http.HttpHost;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.easymock.Capture;
-import org.easymock.EasyMock;
 import org.junit.Test;
 
-import de.mss.net.rest.HttpClientFactory;
 import de.mss.net.rest.RestMethod;
 import de.mss.net.rest.RestRequest;
 import de.mss.net.rest.RestServer;
-import de.mss.utils.Tools;
 import de.mss.utils.exception.MssException;
 import junit.framework.TestCase;
 
@@ -56,7 +46,7 @@ public class WebServiceCallerTest extends TestCase{
    public void testJSonCallerRestRequest() throws IllegalAccessException, InvocationTargetException, NoSuchMethodException, MssException {
       WebServiceJsonCallerForTest<WebServiceTestRequest, WebServiceTestResponse> caller = new WebServiceJsonCallerForTest<>();
       
-      Field[] fields = FieldUtils.getAllFields(this.request.getClass());
+      List<Field> fields = FieldUtils.getAllFieldsList(this.request.getClass());
       
       RestRequest restRequest = caller.getRestRequestForTest(RestMethod.POST, this.request, fields);
 
@@ -68,7 +58,7 @@ public class WebServiceCallerTest extends TestCase{
    public void testJsonCallerUrl() throws MssException {
       WebServiceJsonCallerForTest<WebServiceTestRequest, WebServiceTestResponse> caller = new WebServiceJsonCallerForTest<>();
 
-      Field[] fields = FieldUtils.getAllFields(this.request.getClass());
+      List<Field> fields = FieldUtils.getAllFieldsList(this.request.getClass());
 
       String url = caller.prepareUrlForTest("/v1/customer/{customerNumber}/info", this.request, fields);
 
@@ -81,7 +71,7 @@ public class WebServiceCallerTest extends TestCase{
       WebServiceJsonCallerForTest<WebServiceTestRequest, WebServiceTestResponse> caller = new WebServiceJsonCallerForTest<>();
       caller.setDateFormat("dd-MM-yyyy HH:mm:ss");
 
-      Field[] fields = FieldUtils.getAllFields(this.request.getClass());
+      List<Field> fields = FieldUtils.getAllFieldsList(this.request.getClass());
 
       String url = caller.prepareUrlForTest("/v1/customer/{customerNumber}/info", this.request, fields);
 
@@ -90,6 +80,21 @@ public class WebServiceCallerTest extends TestCase{
 
 
 //   @Test
+   //   public void test() throws MssException {
+   //      RestServer[] servers = new RestServer[] {new RestServer("http://localhost:38080")};
+   //      WebServiceJsonCaller<WebServiceTestRequest, WebServiceTestResponse> caller = new WebServiceJsonCaller<>();
+   //
+   //      WebServiceTestRequest req = new WebServiceTestRequest();
+   //      req.setLoggingId("lala");
+   //      req.customerNumber = 1234567;
+   //      req.userName = "mtschach";
+   //      req.checkInterval = 25;
+   //
+   //      caller.call("lala", servers, "v1/{username}/checkCounter", RestMethod.GET, req, new WebServiceTestResponse(), 1);
+   //
+   //   }
+   //
+   //   @Test
 //   public void testJsonCaller()
 //         throws MssException,
 //         IllegalAccessException,
