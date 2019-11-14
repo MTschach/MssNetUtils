@@ -23,7 +23,7 @@ public abstract class WebService implements java.io.Serializable {
 
    private static final long serialVersionUID = 4249971099246813771L;
 
-   static Logger    baseLogger = LogManager.getLogger("default");
+   static Logger             baseLogger       = LogManager.getRootLogger();
 
    protected Logger logger     = baseLogger;
 

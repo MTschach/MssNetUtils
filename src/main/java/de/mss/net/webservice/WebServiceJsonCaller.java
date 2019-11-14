@@ -40,6 +40,7 @@ public class WebServiceJsonCaller<T extends WebServiceRequest, R extends WebServ
    }
 
 
+   @SuppressWarnings("unchecked")
    @Override
    protected R parseContent(String content, R response) throws MssException {
       R resp = null;

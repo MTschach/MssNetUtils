@@ -11,11 +11,15 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 
 
 public class WebServiceRequestHandler extends AbstractHandler {
+
+   private static Logger      logger            = null;
 
    Map<String, WebService>    serviceList       = null;
 
@@ -193,6 +197,19 @@ public class WebServiceRequestHandler extends AbstractHandler {
    private void initServiceList() {
       if (this.serviceList == null)
          this.serviceList = new HashMap<>();
+   }
+
+
+   public static Logger getLogger() {
+      if (logger == null)
+         logger = LogManager.getRootLogger();
+
+      return logger;
+   }
+
+
+   public static void setLogger(Logger l) {
+      logger = l;
    }
 
 

@@ -228,7 +228,7 @@ public abstract class WebServiceCaller<T extends WebServiceRequest, R extends We
 
    public static Logger getLogger() {
       if (logger == null)
-         logger = LogManager.getLogger("default");
+         logger = LogManager.getRootLogger();
 
       return logger;
    }

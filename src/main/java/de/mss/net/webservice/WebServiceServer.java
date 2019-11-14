@@ -3,6 +3,15 @@ package de.mss.net.webservice;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.DirectoryStream;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -92,7 +101,7 @@ public abstract class WebServiceServer {
 
    public static Logger getLogger() {
       if (logger == null)
-         logger = LogManager.getLogger("default");
+         logger = LogManager.getRootLogger();
 
       return logger;
    }
@@ -111,6 +120,7 @@ public abstract class WebServiceServer {
       this.server.setConnectors(new Connector[] {this.connector});
 
       WebServiceRequestHandler handler = new WebServiceRequestHandler();
+      WebServiceRequestHandler.setLogger(getLogger());
 
       handler.addWebServices(getServiceList());
 
@@ -136,6 +146,57 @@ public abstract class WebServiceServer {
 
 
    protected Map<String, WebService> loadWebServices(ClassLoader cl, String packageName) {
+      String slashedName = getSlashedName(packageName);
+
+      URI uri = null;
+
+      try {
+         uri = cl.getResource(slashedName).toURI();
+      }
+      catch (URISyntaxException e) {
+         getLogger().error(String.format("error while loading package '%s'", packageName), e);
+         return new HashMap<>();
+      }
+
+      if (uri.getScheme().contains("jar"))
+         return loadFromJar(packageName);
+
+      return loadFromFileSystem(cl, packageName);
+   }
+
+
+   private Map<String, WebService> loadFromJar(String packageName) {
+      getLogger().debug("loading from jar");
+
+      Map<String, WebService> list = new HashMap<>();
+
+      URL jar = this.getClass().getProtectionDomain().getCodeSource().getLocation();
+      Path jarFile = Paths.get(jar.toString().substring("file:/".length()));
+      try (
+           FileSystem fs = FileSystems.newFileSystem(jarFile, null);
+           DirectoryStream<Path> directoryStream = Files.newDirectoryStream(fs.getPath(getSlashedName(packageName)));
+      ) {
+         for (Path p : directoryStream) {
+            WebService w = loadWebService(null, getDottedName(p.toString()));
+            if (w != null) {
+               String log = String.format("loading %s for /v1%s", w.getClass().getName(), w.getPath());
+               w.setConfig(getConfigFile());
+               getLogger().debug(log);
+               list.put("/v1" + w.getPath(), w);
+            }
+         }
+      }
+      catch (IOException e) {
+         getLogger().error(String.format("error while jar walking package '%s'", packageName), e);
+      }
+
+      return list;
+   }
+
+
+   private Map<String, WebService> loadFromFileSystem(ClassLoader cl, String packageName) {
+      getLogger().debug("load from file system");
+
       Map<String, WebService> list = new HashMap<>();
 
       String dottedName = getDottedName(packageName);
@@ -162,12 +223,18 @@ public abstract class WebServiceServer {
 
 
    private WebService loadWebService(String packageName, String line) {
-      if (!line.endsWith(".class"))
+      String className = (packageName == null ? "" : packageName + ".") + (line == null ? "" : line);
+      while (className.startsWith("."))
+         className = className.substring(1);
+
+      getLogger().debug("loading class {}", className);
+
+      if (!className.endsWith(".class"))
          return null;
 
-      String name = line.substring(0, line.length() - 6);
+      String name = className.substring(0, className.length() - 6);
       try {
-         Class<?> clazz = Class.forName(packageName + "." + name);
+         Class<?> clazz = Class.forName(name);
          Object c = clazz.newInstance();
          if (WebService.class.isInstance(c))
             return (WebService)c;

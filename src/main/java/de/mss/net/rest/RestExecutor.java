@@ -26,7 +26,7 @@ import de.mss.utils.exception.MssException;
 
 public class RestExecutor {
 
-   private static Logger defaultLogger = LogManager.getLogger();
+   private static Logger defaultLogger = LogManager.getRootLogger();
 
 
    private Logger           logger     = defaultLogger;
