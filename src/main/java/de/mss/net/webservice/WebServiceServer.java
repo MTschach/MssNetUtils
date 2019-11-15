@@ -145,7 +145,7 @@ public abstract class WebServiceServer {
    }
 
 
-   protected Map<String, WebService> loadWebServices(ClassLoader cl, String packageName) {
+   protected Map<String, WebService> loadWebServices(ClassLoader cl, String packageName, String pathPrefix) {
       String slashedName = getSlashedName(packageName);
 
       URI uri = null;
@@ -159,13 +159,13 @@ public abstract class WebServiceServer {
       }
 
       if (uri.getScheme().contains("jar"))
-         return loadFromJar(packageName);
+         return loadFromJar(packageName, pathPrefix == null ? "" : pathPrefix);
 
-      return loadFromFileSystem(cl, packageName);
+      return loadFromFileSystem(cl, packageName, pathPrefix == null ? "" : pathPrefix);
    }
 
 
-   private Map<String, WebService> loadFromJar(String packageName) {
+   private Map<String, WebService> loadFromJar(String packageName, String pathPrefix) {
       getLogger().debug("loading from jar");
 
       Map<String, WebService> list = new HashMap<>();
@@ -179,7 +179,7 @@ public abstract class WebServiceServer {
          for (Path p : directoryStream) {
             WebService w = loadWebService(null, getDottedName(p.toString()));
             if (w != null) {
-               String log = String.format("loading %s for /v1%s", w.getClass().getName(), w.getPath());
+               String log = String.format("loading %s for %s%s", w.getClass().getName(), pathPrefix, w.getPath());
                w.setConfig(getConfigFile());
                getLogger().debug(log);
                list.put("/v1" + w.getPath(), w);
@@ -194,7 +194,7 @@ public abstract class WebServiceServer {
    }
 
 
-   private Map<String, WebService> loadFromFileSystem(ClassLoader cl, String packageName) {
+   private Map<String, WebService> loadFromFileSystem(ClassLoader cl, String packageName, String pathPrefix) {
       getLogger().debug("load from file system");
 
       Map<String, WebService> list = new HashMap<>();
@@ -207,7 +207,7 @@ public abstract class WebServiceServer {
          while ((line = br.readLine()) != null) {
             WebService w = loadWebService(dottedName, line);
             if (w != null) {
-               String log = String.format("loading %s for /v1%s", w.getClass().getName(), w.getPath());
+               String log = String.format("loading %s for %s%s", w.getClass().getName(), pathPrefix, w.getPath());
                w.setConfig(getConfigFile());
                getLogger().debug(log);
                list.put("/v1" + w.getPath(), w);
