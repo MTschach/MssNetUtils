@@ -13,6 +13,9 @@ import javax.ws.rs.QueryParam;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang3.reflect.FieldUtils;
 
+import de.mss.net.exception.ErrorCodes;
+import de.mss.utils.exception.MssException;
+
 public abstract class WebServiceDataBuilder<T extends Object> {
 
    protected abstract void setOtherValue(T clazz, Field field, String value)
@@ -24,7 +27,8 @@ public abstract class WebServiceDataBuilder<T extends Object> {
    public T parseData(Map<String, String> params, T clazz)
          throws IllegalAccessException,
          InvocationTargetException,
-         IOException {
+         IOException,
+         MssException {
       if (clazz == null)
          return null;
 
@@ -37,8 +41,11 @@ public abstract class WebServiceDataBuilder<T extends Object> {
             continue;
 
          String fieldName = field.getName();
-         if (field.isAnnotationPresent(PathParam.class))
+         if (field.isAnnotationPresent(PathParam.class)) {
             fieldName = field.getAnnotationsByType(PathParam.class)[0].value();
+            if (!de.mss.utils.Tools.isSet(params.get(fieldName)))
+               throw new MssException(ErrorCodes.ERROR_PATH_PARAMETER_NOT_SET, "the path parameter " + fieldName + " is not set");
+         }
          else if (field.isAnnotationPresent(QueryParam.class))
             fieldName = field.getAnnotationsByType(QueryParam.class)[0].value();
          else if (field.isAnnotationPresent(HeaderParam.class))
