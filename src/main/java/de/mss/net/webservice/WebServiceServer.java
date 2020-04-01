@@ -23,6 +23,7 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 
 import de.mss.configtools.ConfigFile;
+import de.mss.utils.os.OsType;
 
 public abstract class WebServiceServer {
 
@@ -171,7 +172,7 @@ public abstract class WebServiceServer {
       Map<String, WebService> list = new HashMap<>();
 
       URL jar = this.getClass().getProtectionDomain().getCodeSource().getLocation();
-      Path jarFile = Paths.get(jar.toString().substring("file:/".length()));
+      Path jarFile = Paths.get(jar.toString().substring("file:".length() + (OsType.getOsType() == OsType.WINDOWS ? 1 : 0)));
       try (
            FileSystem fs = FileSystems.newFileSystem(jarFile, null);
            DirectoryStream<Path> directoryStream = Files.newDirectoryStream(fs.getPath(getSlashedName(packageName)));

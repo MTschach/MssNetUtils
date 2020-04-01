@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -113,6 +114,7 @@ public class WebServiceRequestHandler extends AbstractHandler {
       Map<String, String> params = getPathParams(target);
       params = getHeaderParams(baseRequest, params);
       params = getUrlParams(baseRequest, params);
+      params = getBodyParams(baseRequest, params);
 
       webService.handleRequest(loggingId, target, params, baseRequest, request, response);
       baseRequest.setHandled(true);
@@ -162,6 +164,23 @@ public class WebServiceRequestHandler extends AbstractHandler {
          }
       }
 
+      return ret;
+   }
+
+
+   private Map<String, String> getBodyParams(Request request, Map<String, String> params) {
+      Map<String, String> ret = params;
+      if (ret == null)
+         ret = new HashMap<>();
+      
+      if ("POST".equalsIgnoreCase(request.getMethod())) 
+      {
+          try {
+             ret.put("body", request.getReader().lines().collect(Collectors.joining(System.lineSeparator())));
+          } catch (IOException e) {
+          }
+      }
+      
       return ret;
    }
 

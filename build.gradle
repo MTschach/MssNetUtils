@@ -16,6 +16,7 @@ version = artifact.version
 
 buildscript {
     repositories {
+        mavenLocal()
         jcenter()
         google()
     }
@@ -36,10 +37,11 @@ allprojects {
 
 // In this section you declare where to find the dependencies of your project
 repositories {
+   mavenLocal()
    jcenter()
-	maven {
-		url "https://dl.bintray.com/mtschach/Mss"
-	}
+   maven {
+      url "https://dl.bintray.com/mtschach/Mss"
+   }
 }
 
 dependencies {
@@ -79,5 +81,8 @@ task fatJar(type: Jar) {
 }
 
 
+task publishLocal {
+   dependsOn 'publishToMavenLocal'
+}
 
 apply from: 'deploy.gradle'
