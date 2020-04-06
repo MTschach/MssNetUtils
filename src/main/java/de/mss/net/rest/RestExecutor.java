@@ -130,7 +130,7 @@ public class RestExecutor {
 
       getLogger().debug(de.mss.utils.Tools.formatLoggingId(loggingId) + "executing request to " + req.getURI().toString());
 
-      HttpHost target = new HttpHost(server.getServer().getHost(), server.getServer().getPort().intValue());
+//      HttpHost target = new HttpHost(server.getServer().getHost(), server.getServer().getPort().intValue());
       while (retries > 0) {
          retries-- ;
          try (CloseableHttpResponse resp = httpClient.execute(req)) {

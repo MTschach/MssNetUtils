@@ -11,7 +11,6 @@ import org.junit.Test;
 
 import de.mss.net.rest.RestMethod;
 import de.mss.net.rest.RestRequest;
-import de.mss.net.rest.RestServer;
 import de.mss.utils.exception.MssException;
 import junit.framework.TestCase;
 
@@ -175,17 +174,17 @@ public class WebServiceCallerTest extends TestCase{
 //
 //      assertNotNull("Response is not null", response);
 //   }
-
-
-   private RestServer[] setUpRestServers(int count) throws MssException {
-      List<RestServer> list = new ArrayList<>();
-
-      int curr = 1;
-      while (curr <= count) {
-         list.add(new RestServer("Http://127.0.0." + curr + ":1234", null));
-         curr++ ;
-      }
-
-      return list.toArray(new RestServer[list.size()]);
-   }
+//
+//
+//   private RestServer[] setUpRestServers(int count) throws MssException {
+//      List<RestServer> list = new ArrayList<>();
+//
+//      int curr = 1;
+//      while (curr <= count) {
+//         list.add(new RestServer("Http://127.0.0." + curr + ":1234", null));
+//         curr++ ;
+//      }
+//
+//      return list.toArray(new RestServer[list.size()]);
+//   }
 }

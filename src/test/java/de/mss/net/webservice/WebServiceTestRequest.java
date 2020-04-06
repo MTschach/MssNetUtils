@@ -5,6 +5,8 @@ import javax.ws.rs.QueryParam;
 
 public class WebServiceTestRequest extends WebServiceRequest {
 
+   private static final long serialVersionUID = 3968277551977019120L;
+
    @HeaderParam(value = "sessionId")
    public String         sessionId;
 

@@ -170,7 +170,7 @@ public class Server {
          String[] parts = u.split(":");
          setHost(parts[0]);
          try {
-            setPort(new Integer(parts[1]));
+            setPort(Integer.parseInt(parts[1]));
          }
          catch (NumberFormatException e) {
             throw new MssException(

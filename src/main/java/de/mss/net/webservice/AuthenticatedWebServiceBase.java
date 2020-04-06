@@ -12,7 +12,9 @@ import de.mss.utils.exception.MssException;
 
 public abstract class AuthenticatedWebServiceBase extends WebService {
 
-   @Override
+   private static final long serialVersionUID = -8849334025941752837L;
+
+@Override
    public boolean handleRequest(
          String loggingId,
          String target,

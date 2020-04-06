@@ -3,6 +3,7 @@ package de.mss.net.webservice;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -187,7 +188,7 @@ public abstract class WebServiceServer {
             }
          }
       }
-      catch (IOException e) {
+      catch (IOException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
          getLogger().error(String.format("error while jar walking package '%s'", packageName), e);
       }
 
@@ -215,7 +216,7 @@ public abstract class WebServiceServer {
             }
          }
       }
-      catch (IOException e) {
+      catch (IOException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
          getLogger().error("error while walking package " + packageName, e);
       }
 
@@ -223,7 +224,7 @@ public abstract class WebServiceServer {
    }
 
 
-   private WebService loadWebService(String packageName, String line) {
+   private WebService loadWebService(String packageName, String line) throws IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
       String className = (packageName == null ? "" : packageName + ".") + (line == null ? "" : line);
       while (className.startsWith("."))
          className = className.substring(1);
@@ -236,7 +237,7 @@ public abstract class WebServiceServer {
       String name = className.substring(0, className.length() - 6);
       try {
          Class<?> clazz = Class.forName(name);
-         Object c = clazz.newInstance();
+         Object c = clazz.getDeclaredConstructor().newInstance();
          if (WebService.class.isInstance(c))
             return (WebService)c;
       }
