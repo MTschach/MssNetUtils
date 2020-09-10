@@ -17,14 +17,16 @@ import org.apache.logging.log4j.Logger;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 
+import de.mss.utils.Tools;
+
 
 public class WebServiceRequestHandler extends AbstractHandler {
 
-   private static Logger      logger            = null;
+   private static Logger                                          logger            = null;
 
-   Map<String, WebService>    serviceList       = null;
+   Map<String, WebService<WebServiceRequest, WebServiceResponse>> serviceList       = null;
 
-   public static final String HEADER_LOGGING_ID = "LOGGING-ID";
+   public static final String                                     HEADER_LOGGING_ID = "LOGGING-ID";
 
    @Override
    public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response)
@@ -32,17 +34,20 @@ public class WebServiceRequestHandler extends AbstractHandler {
          ServletException {
 
       String loggingId = null;
+      String method = "";
       if (request != null) {
          loggingId = request.getHeader(HEADER_LOGGING_ID);
+         method = request.getMethod();
       }
 
-      if (!de.mss.utils.Tools.isSet(loggingId))
+      if (!de.mss.utils.Tools.isSet(loggingId)) {
          loggingId = UUID.randomUUID().toString();
+      }
 
       response.setHeader(HEADER_LOGGING_ID, loggingId);
       response.setHeader("Access-Control-Expose-Headers", HEADER_LOGGING_ID);
 
-      WebService service = findWebService(target);
+      final WebService<WebServiceRequest, WebServiceResponse> service = findWebService(method + " " + target);
       if (service == null) {
          response.setStatus(HttpServletResponse.SC_NOT_FOUND);
          baseRequest.setHandled(true);
@@ -56,10 +61,11 @@ public class WebServiceRequestHandler extends AbstractHandler {
    private String findTarget(String target) {
       initServiceList();
 
-      if (this.serviceList.containsKey(target))
+      if (this.serviceList.containsKey(target)) {
          return target;
+      }
 
-      for (Entry<String, WebService> entry : this.serviceList.entrySet()) {
+      for (final Entry<String, WebService<WebServiceRequest, WebServiceResponse>> entry : this.serviceList.entrySet()) {
          if (matches(entry.getKey(), target)) {
             return entry.getKey();
          }
@@ -69,13 +75,14 @@ public class WebServiceRequestHandler extends AbstractHandler {
    }
 
 
-   private WebService findWebService(String target) {
+   private WebService<WebServiceRequest, WebServiceResponse> findWebService(String target) {
       initServiceList();
 
-      if (this.serviceList.containsKey(target))
+      if (this.serviceList.containsKey(target)) {
          return this.serviceList.get(target);
+      }
 
-      for (Entry<String, WebService> entry : this.serviceList.entrySet()) {
+      for (final Entry<String, WebService<WebServiceRequest, WebServiceResponse>> entry : this.serviceList.entrySet()) {
          if (matches(entry.getKey(), target)) {
             return entry.getValue();
          }
@@ -85,33 +92,33 @@ public class WebServiceRequestHandler extends AbstractHandler {
    }
 
 
-   private boolean matches(String key, String target) {
-      String[] keys = key.split("/");
-      String[] targets = target.split("/");
+   private static boolean matches(String key, String target) {
+      final String[] keys = key.split("/");
+      final String[] targets = target.split("/");
 
-      if (keys.length != targets.length)
+      if (keys.length != targets.length) {
          return false;
+      }
 
       for (int i = 0; i < keys.length; i++ ) {
-         if (!keys[i].matches("\\{\\w+\\}") && !keys[i].equals(targets[i]))
+         if (!keys[i].matches("\\{\\w+\\}") && !keys[i].equals(targets[i])) {
             return false;
+         }
       }
 
       return true;
    }
 
 
-   private
-         void
-         handleRequest(
-               String loggingId,
-               String target,
-               WebService webService,
-               Request baseRequest,
-               HttpServletRequest request,
-               HttpServletResponse response) {
+   private void handleRequest(
+         String loggingId,
+         String target,
+         WebService<WebServiceRequest, WebServiceResponse> webService,
+         Request baseRequest,
+         HttpServletRequest request,
+         HttpServletResponse response) {
 
-      Map<String, String> params = getPathParams(target);
+      Map<String, String> params = getPathParams(request.getMethod() + " " + target);
       params = getHeaderParams(baseRequest, params);
       params = getUrlParams(baseRequest, params);
       params = getBodyParams(baseRequest, params);
@@ -121,14 +128,15 @@ public class WebServiceRequestHandler extends AbstractHandler {
    }
 
 
-   private Map<String, String> getHeaderParams(Request request, Map<String, String> params) {
+   private static Map<String, String> getHeaderParams(Request request, Map<String, String> params) {
       Map<String, String> ret = params;
-      if (ret == null)
+      if (ret == null) {
          ret = new HashMap<>();
+      }
 
-      Enumeration<String> names = request.getHeaderNames();
+      final Enumeration<String> names = request.getHeaderNames();
       while (names.hasMoreElements()) {
-         String n = names.nextElement();
+         final String n = names.nextElement();
          ret.put(n, request.getHeader(n));
       }
 
@@ -136,14 +144,15 @@ public class WebServiceRequestHandler extends AbstractHandler {
    }
 
 
-   private Map<String, String> getUrlParams(Request request, Map<String, String> params) {
+   private static Map<String, String> getUrlParams(Request request, Map<String, String> params) {
       Map<String, String> ret = params;
-      if (ret == null)
+      if (ret == null) {
          ret = new HashMap<>();
+      }
 
-      Enumeration<String> names = request.getParameterNames();
+      final Enumeration<String> names = request.getParameterNames();
       while (names.hasMoreElements()) {
-         String n = names.nextElement();
+         final String n = names.nextElement();
          ret.put(n, request.getParameter(n));
       }
 
@@ -152,11 +161,11 @@ public class WebServiceRequestHandler extends AbstractHandler {
 
 
    private Map<String, String> getPathParams(String target) {
-      Map<String, String> ret = new HashMap<>();
+      final Map<String, String> ret = new HashMap<>();
 
-      String originTarget = findTarget(target);
-      String[] originParts = originTarget.split("/");
-      String[] targetParts = target.split("/");
+      final String originTarget = findTarget(target);
+      final String[] originParts = originTarget.split("/");
+      final String[] targetParts = target.split("/");
 
       for (int i = 0; i < originParts.length; i++ ) {
          if (originParts[i].matches("\\{\\w+\\}")) {
@@ -168,35 +177,38 @@ public class WebServiceRequestHandler extends AbstractHandler {
    }
 
 
-   private Map<String, String> getBodyParams(Request request, Map<String, String> params) {
+   private static Map<String, String> getBodyParams(Request request, Map<String, String> params) {
       Map<String, String> ret = params;
-      if (ret == null)
+      if (ret == null) {
          ret = new HashMap<>();
-      
-      if ("POST".equalsIgnoreCase(request.getMethod())) 
-      {
-          try {
-             ret.put("body", request.getReader().lines().collect(Collectors.joining(System.lineSeparator())));
-          } catch (IOException e) {
-          }
       }
-      
+
+      if ("POST".equalsIgnoreCase(request.getMethod())) {
+         try {
+            ret.put("body", request.getReader().lines().collect(Collectors.joining(System.lineSeparator())));
+         }
+         catch (final IOException e) {
+            Tools.doNullLog(e);
+         }
+      }
+
       return ret;
    }
 
 
-   public void addWebService(String target, WebService service) {
+   public void addWebService(String target, WebService<WebServiceRequest, WebServiceResponse> service) {
       initServiceList();
 
       this.serviceList.put(target, service);
    }
 
 
-   public void addWebServices(Map<String, WebService> list) {
+   public void addWebServices(Map<String, WebService<WebServiceRequest, WebServiceResponse>> list) {
       initServiceList();
 
-      for (Entry<String, WebService> entry : list.entrySet())
+      for (final Entry<String, WebService<WebServiceRequest, WebServiceResponse>> entry : list.entrySet()) {
          this.serviceList.put(entry.getKey(), entry.getValue());
+      }
    }
 
 
@@ -208,20 +220,23 @@ public class WebServiceRequestHandler extends AbstractHandler {
    public void removeWebService(String target) {
       initServiceList();
 
-      if (this.serviceList.containsKey(target))
+      if (this.serviceList.containsKey(target)) {
          this.serviceList.remove(target);
+      }
    }
 
 
    private void initServiceList() {
-      if (this.serviceList == null)
+      if (this.serviceList == null) {
          this.serviceList = new HashMap<>();
+      }
    }
 
 
    public static Logger getLogger() {
-      if (logger == null)
+      if (logger == null) {
          logger = LogManager.getRootLogger();
+      }
 
       return logger;
    }

@@ -1,7 +1,6 @@
 package de.mss.net.webservice;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,7 +41,7 @@ public class WebServiceCallerTest extends TestCase{
    
 
    @Test
-   public void testJSonCallerRestRequest() throws IllegalAccessException, InvocationTargetException, NoSuchMethodException, MssException {
+   public void testJSonCallerRestRequest() throws MssException {
       WebServiceJsonCallerForTest<WebServiceTestRequest, WebServiceTestResponse> caller = new WebServiceJsonCallerForTest<>();
       
       List<Field> fields = FieldUtils.getAllFieldsList(this.request.getClass());
@@ -54,7 +53,7 @@ public class WebServiceCallerTest extends TestCase{
 
 
    @Test
-   public void testJsonCallerUrl() throws MssException {
+   public void testJsonCallerUrl() {
       WebServiceJsonCallerForTest<WebServiceTestRequest, WebServiceTestResponse> caller = new WebServiceJsonCallerForTest<>();
 
       List<Field> fields = FieldUtils.getAllFieldsList(this.request.getClass());
@@ -66,7 +65,7 @@ public class WebServiceCallerTest extends TestCase{
 
 
    @Test
-   public void testJsonCallerUrlOtherDateFormat() throws MssException {
+   public void testJsonCallerUrlOtherDateFormat() {
       WebServiceJsonCallerForTest<WebServiceTestRequest, WebServiceTestResponse> caller = new WebServiceJsonCallerForTest<>();
       caller.setDateFormat("dd-MM-yyyy HH:mm:ss");
 

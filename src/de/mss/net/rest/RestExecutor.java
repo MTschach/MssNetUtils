@@ -159,7 +159,7 @@ public class RestExecutor {
    }
 
 
-   private String getRedirectUrl(CloseableHttpResponse resp) {
+   private static String getRedirectUrl(CloseableHttpResponse resp) {
       if (isRedirect(resp.getStatusLine().getStatusCode())) {
          Header redirectHeader = resp.getFirstHeader("location");
          if (redirectHeader != null)
@@ -280,7 +280,7 @@ public class RestExecutor {
    }
 
 
-   private RequestBuilder applyUrlAndParams(RequestBuilder requestBuilder, String url, Map<String, String> urlParams) {
+   private static RequestBuilder applyUrlAndParams(RequestBuilder requestBuilder, String url, Map<String, String> urlParams) {
       RequestBuilder retBuilder = requestBuilder;
 
       String u = url;
@@ -296,17 +296,17 @@ public class RestExecutor {
    }
 
 
-   private RequestBuilder applyHeaderParams(RequestBuilder requestBuilder, Map<String, String> headerParams) {
+   private static RequestBuilder applyHeaderParams(RequestBuilder requestBuilder, Map<String, String> headerParams) {
       RequestBuilder retBuilder = requestBuilder;
 
       if (headerParams != null)
-         headerParams.forEach((key, value) -> retBuilder.addHeader(key, value));
+         headerParams.forEach((key, value) -> retBuilder.addHeader(key.toLowerCase(), value));
 
       return retBuilder;
    }
 
 
-   private RequestBuilder applyParams(RequestBuilder requestBuilder, Map<String, String> urlParams) {
+   private static RequestBuilder applyParams(RequestBuilder requestBuilder, Map<String, String> urlParams) {
       RequestBuilder retBuilder = requestBuilder;
 
       if (urlParams != null)
@@ -316,7 +316,7 @@ public class RestExecutor {
    }
 
 
-   private RequestBuilder applyProxy(RequestBuilder requestBuilder, AuthenticatedServer proxy) {
+   private static RequestBuilder applyProxy(RequestBuilder requestBuilder, AuthenticatedServer proxy) {
       RequestBuilder retBuilder = requestBuilder;
 
       if (proxy != null && Tools.isSet(proxy.getUser()) && Tools.isSet(proxy.getPassword())) {

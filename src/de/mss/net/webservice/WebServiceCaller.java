@@ -70,7 +70,7 @@ public abstract class WebServiceCaller<T extends WebServiceRequest, R extends We
    }
 
 
-   private List<Field> getCallableFields(Class<? extends WebServiceRequest> clazz) {
+   private static List<Field> getCallableFields(Class<? extends WebServiceRequest> clazz) {
       List<Field> ret = new ArrayList<>();
       for (Field f : FieldUtils.getAllFieldsList(clazz))
          if (!java.lang.reflect.Modifier.isStatic(f.getModifiers()))
@@ -118,7 +118,7 @@ public abstract class WebServiceCaller<T extends WebServiceRequest, R extends We
    }
 
 
-   protected void sleep(long millies) {
+   protected static void sleep(long millies) {
       try {
          Thread.sleep(millies);
       }
