@@ -8,9 +8,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
@@ -20,6 +17,8 @@ import org.eclipse.jetty.server.Request;
 import de.mss.configtools.ConfigFile;
 import de.mss.utils.Tools;
 import de.mss.utils.exception.MssException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 
 public abstract class WebService<R extends WebServiceRequest, T extends WebServiceResponse> implements java.io.Serializable {
@@ -58,6 +57,7 @@ public abstract class WebService<R extends WebServiceRequest, T extends WebServi
    }
 
 
+   @SuppressWarnings("resource")
    protected int writeResponse(String loggingId, HttpServletResponse httpResponse, T resp) throws MssException {
       if (resp == null) {
          return HttpServletResponse.SC_OK;
@@ -66,14 +66,14 @@ public abstract class WebService<R extends WebServiceRequest, T extends WebServi
       try {
          int httpStatus = HttpServletResponse.SC_OK;
 
-         if (resp.getErrorCode() != null && resp.getErrorCode() != HttpServletResponse.SC_OK) {
-            httpStatus = resp.getErrorCode();
-         } else if (resp.getStatusCode() != null && resp.getStatusCode() != HttpServletResponse.SC_OK) {
-            httpStatus = resp.getStatusCode();
+         if (useErrorCode(resp.getErrorCode())) {
+            httpStatus = resp.getErrorCode().intValue();
+         } else if (useErrorCode(resp.getStatusCode())) {
+            httpStatus = resp.getStatusCode().intValue();
          } else {
-            resp.setErrorCode(null);
+            resp.setErrorCode(0);
             resp.setErrorText(null);
-            resp.setStatusCode(null);
+            resp.setStatusCode(httpStatus);
          }
 
          httpResponse.getWriter().write(new WebServiceJsonDataBuilder<T>().writeData(resp));
@@ -85,6 +85,11 @@ public abstract class WebService<R extends WebServiceRequest, T extends WebServi
       catch (final IOException e) {
          throw new MssException(de.mss.net.exception.ErrorCodes.ERROR_RESPONSE_NOT_WRITEABLE, e, "could not write response");
       }
+   }
+
+
+   private boolean useErrorCode(Integer error) {
+      return error != null && error.intValue() != 0 && error.intValue() / 100 != 2;
    }
 
 

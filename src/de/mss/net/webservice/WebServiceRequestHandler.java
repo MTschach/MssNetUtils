@@ -1,16 +1,14 @@
 package de.mss.net.webservice;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.stream.Collectors;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,6 +16,9 @@ import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 
 import de.mss.utils.Tools;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 
 public class WebServiceRequestHandler extends AbstractHandler {
@@ -27,6 +28,11 @@ public class WebServiceRequestHandler extends AbstractHandler {
    Map<String, WebService<WebServiceRequest, WebServiceResponse>> serviceList       = null;
 
    public static final String                                     HEADER_LOGGING_ID = "LOGGING-ID";
+
+   private final List<SpecialWebServiceRequestHandler>            specialHandlers   = new ArrayList<>();
+
+   private List<String>                                           headersToCopy     = new ArrayList<>();
+
 
    @Override
    public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response)
@@ -46,6 +52,8 @@ public class WebServiceRequestHandler extends AbstractHandler {
 
       response.setHeader(HEADER_LOGGING_ID, loggingId);
       response.setHeader("Access-Control-Expose-Headers", HEADER_LOGGING_ID);
+      addCorsHeaders(request, response);
+      copyHeaders(baseRequest, response);
 
       final WebService<WebServiceRequest, WebServiceResponse> service = findWebService(method + " " + target);
       if (service == null) {
@@ -58,8 +66,22 @@ public class WebServiceRequestHandler extends AbstractHandler {
    }
 
 
+   protected void addCorsHeaders(HttpServletRequest request, HttpServletResponse response) {
+      response.setHeader("Access-Control-Allow-Origin", request.getHeader("Origin"));
+      response.addHeader("Access-Control-Request-Methods", "*");
+      response.addHeader("Access-Control-Allow-Headers", "*");
+   }
+
+
    private String findTarget(String target) {
       initServiceList();
+
+      for (final SpecialWebServiceRequestHandler sh : this.specialHandlers) {
+         final String t = sh.findTarget(target);
+         if (t != null) {
+            return t;
+         }
+      }
 
       if (this.serviceList.containsKey(target)) {
          return target;
@@ -77,6 +99,13 @@ public class WebServiceRequestHandler extends AbstractHandler {
 
    private WebService<WebServiceRequest, WebServiceResponse> findWebService(String target) {
       initServiceList();
+
+      for (final SpecialWebServiceRequestHandler sh : this.specialHandlers) {
+         final WebService<WebServiceRequest, WebServiceResponse> ws = sh.findWebService(target);
+         if (ws != null) {
+            return ws;
+         }
+      }
 
       if (this.serviceList.containsKey(target)) {
          return this.serviceList.get(target);
@@ -124,7 +153,19 @@ public class WebServiceRequestHandler extends AbstractHandler {
       params = getBodyParams(baseRequest, params);
 
       webService.handleRequest(loggingId, target, params, baseRequest, request, response);
+
       baseRequest.setHandled(true);
+   }
+
+
+   private void copyHeaders(Request request, HttpServletResponse response) {
+      for (final String name : this.headersToCopy) {
+         final String val = request.getHeader(name);
+         if (val != null) {
+            response.addHeader(name, val);
+         }
+      }
+
    }
 
 
@@ -177,6 +218,7 @@ public class WebServiceRequestHandler extends AbstractHandler {
    }
 
 
+   @SuppressWarnings("resource")
    private static Map<String, String> getBodyParams(Request request, Map<String, String> params) {
       Map<String, String> ret = params;
       if (ret == null) {
@@ -247,4 +289,23 @@ public class WebServiceRequestHandler extends AbstractHandler {
    }
 
 
+   public void addSpecialHandler(SpecialWebServiceRequestHandler handler) {
+      this.specialHandlers.add(handler);
+   }
+
+
+   public void setHeadersToCopy(List<String> l) {
+      this.headersToCopy = l;
+
+      if (this.headersToCopy == null) {
+         this.headersToCopy = new ArrayList<>();
+      }
+   }
+
+
+   public void addHeaderToCopy(String name) {
+      if (!this.headersToCopy.contains(name)) {
+         this.headersToCopy.add(name);
+      }
+   }
 }

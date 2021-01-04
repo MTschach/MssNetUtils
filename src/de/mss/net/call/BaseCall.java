@@ -2,12 +2,11 @@ package de.mss.net.call;
 
 import java.util.function.Supplier;
 
-import javax.servlet.http.HttpServletResponse;
-
 import de.mss.net.webservice.WebServiceRequest;
 import de.mss.net.webservice.WebServiceResponse;
 import de.mss.utils.exception.Error;
 import de.mss.utils.exception.MssException;
+import jakarta.servlet.http.HttpServletResponse;
 
 public abstract class BaseCall<T extends WebServiceRequest, R extends WebServiceResponse> {
 
@@ -56,6 +55,7 @@ public abstract class BaseCall<T extends WebServiceRequest, R extends WebService
    }
 
 
+   @SuppressWarnings("unused")
    protected void checkRequest(String loggingId, T request) throws MssException {
       // nothing to do here
    }

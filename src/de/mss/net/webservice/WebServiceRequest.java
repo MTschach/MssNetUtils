@@ -4,7 +4,7 @@ import javax.ws.rs.HeaderParam;
 
 import de.mss.utils.exception.MssException;
 
-public abstract class WebServiceRequest implements java.io.Serializable {
+public class WebServiceRequest implements java.io.Serializable {
 
    private static final long serialVersionUID = 7666097603777732487L;
 

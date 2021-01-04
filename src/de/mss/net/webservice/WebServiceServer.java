@@ -58,10 +58,19 @@ public abstract class WebServiceServer {
 
 
    public void run(String ip) {
+      run(ip, null);
+   }
+
+
+   public void run(String ip, WebServiceRequestHandler handler) {
       try {
          initApplication();
 
-         startServer(ip);
+         if (handler != null) {
+            startServer(ip, handler);
+         } else {
+            startServer(ip);
+         }
 
          Runtime.getRuntime().addShutdownHook(new Thread(() -> stopServer()));
 
@@ -116,14 +125,19 @@ public abstract class WebServiceServer {
 
 
    protected void startServer(String ip) throws Exception {
+      final WebServiceRequestHandler handler = new WebServiceRequestHandler();
+      WebServiceRequestHandler.setLogger(getLogger());
+
+      startServer(ip, handler);
+   }
+
+
+   protected void startServer(String ip, WebServiceRequestHandler handler) throws Exception {
       this.server = new Server();
 
       this.connector = new ServerConnector(this.server);
       this.connector.setPort(this.port.intValue());
       this.server.setConnectors(new Connector[] {this.connector});
-
-      final WebServiceRequestHandler handler = new WebServiceRequestHandler();
-      WebServiceRequestHandler.setLogger(getLogger());
 
       handler.addWebServices(getServiceList());
 
