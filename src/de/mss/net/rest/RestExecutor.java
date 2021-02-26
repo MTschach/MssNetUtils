@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.apache.http.Header;
 import org.apache.http.HttpHost;
@@ -29,196 +30,61 @@ public class RestExecutor {
    private static Logger defaultLogger = LogManager.getRootLogger();
 
 
-   private Logger           logger     = defaultLogger;
+   private static RequestBuilder applyHeaderParams(RequestBuilder requestBuilder, Map<String, String> headerParams) {
+      final RequestBuilder retBuilder = requestBuilder;
 
-   private int     connectionTimeout = 10000;
-   private int     requestTimeout    = 180000;
+      headerParams.forEach((key, value) -> retBuilder.addHeader(key.toLowerCase(), value));
 
-   private boolean binaryResponse    = false;
-
-
-   private List<RestServer> serverList = null;
-
-   public RestExecutor(RestServer server) {
-      addServer(server);
+      return retBuilder;
    }
 
 
-   public RestExecutor(RestServer server, Logger l) {
-      addServer(server);
-      setLogger(l);
+   private static RequestBuilder applyParams(RequestBuilder requestBuilder, Map<String, String> urlParams) {
+      final RequestBuilder retBuilder = requestBuilder;
+
+      urlParams.forEach((key, value) -> retBuilder.addParameter(key, value));
+
+      return retBuilder;
    }
 
 
-   public RestExecutor(List<RestServer> servers) {
-      for (RestServer server : servers)
-         addServer(server);
-   }
+   private static RequestBuilder applyProxy(RequestBuilder requestBuilder, AuthenticatedServer proxy) {
+      final RequestBuilder retBuilder = requestBuilder;
 
-
-   public RestExecutor(List<RestServer> servers, Logger l) {
-      for (RestServer server : servers)
-         addServer(server);
-
-      setLogger(l);
-   }
-
-
-   public RestExecutor(RestServer[] servers) {
-      for (RestServer server : servers)
-         addServer(server);
-   }
-
-
-   public RestExecutor(RestServer[] servers, Logger l) {
-      for (RestServer server : servers)
-         addServer(server);
-
-      setLogger(l);
-   }
-
-
-   public RestResponse executeRequest(String loggingId, RestRequest request, String bindAddress) throws MssException {
-      for (RestServer server : this.serverList) {
-         try {
-            return executeRequest(loggingId, request, server, bindAddress);
-         }
-         catch (MssException e) {
-            getLogger()
-                  .debug(
-                        de.mss.utils.Tools.formatLoggingId(loggingId)
-                              + "could not execute request for server "
-                              + (server.getServer() != null ? server.getServer().getUrl() : "null"),
-                        e);
-         }
-
+      if (proxy != null && Tools.isSet(proxy.getUser()) && Tools.isSet(proxy.getPassword())) {
+         final HttpHost p = new HttpHost(proxy.getHost(), proxy.getPort().intValue(), proxy.getProtocol().getProtocol());
+         final RequestConfig conf = RequestConfig.custom().setProxy(p).build();
+         retBuilder.setConfig(conf);
       }
-      throw new MssException(de.mss.net.exception.ErrorCodes.ERROR_UNABLE_TO_EXECUTE_REQUEST);
+
+      return retBuilder;
    }
 
 
-   public RestResponse executeRequest(String loggingId, RestRequest request, RestServer server, String bindAddress) throws MssException {
-      if (request == null || server == null || server.getServer() == null)
-         throw new MssException(de.mss.utils.exception.ErrorCodes.ERROR_INVALID_PARAM, "some required parameter are null");
+   private static RequestBuilder applyUrlAndParams(RequestBuilder requestBuilder, String url, Map<String, String> urlParams) {
+      final RequestBuilder retBuilder = requestBuilder;
 
-      de.mss.utils.StopWatch stopWatch = new de.mss.utils.StopWatch();
-      
-      try (CloseableHttpClient httpClient = HttpClientFactory.getHttpClient(server)) {
-         RestResponse response = executeWithRetry(loggingId, httpClient, request, server, 3);
-         stopWatch.stop();
-         getLogger()
-               .debug(
-                     de.mss.utils.Tools.formatLoggingId(loggingId)
-                           + "executing request to "
-                           + server.getServer().getCompleteUrl()
-                           + " done ["
-                           + stopWatch.getDuration()
-                           + " ms]");
+      String u = url;
 
-         return response;
+      for (final String key : urlParams.keySet()) {
+         u = u.replaceAll("\\{" + key + "\\}", urlParams.get(key));
       }
-      catch (IOException e) {
-         throw new MssException(de.mss.net.exception.ErrorCodes.ERROR_UNABLE_TO_EXECUTE_REQUEST, e, "error while working on httpclient");
-      }
-   }
 
+      retBuilder.setUri(u);
 
-   private RestResponse executeWithRetry(String loggingId, CloseableHttpClient httpClient, RestRequest request, RestServer server, int retryCount)
-         throws MssException {
-      int retries = retryCount;
-      HttpUriRequest req = getRequestBuilder(request, server).build();
-
-      getLogger().debug(de.mss.utils.Tools.formatLoggingId(loggingId) + "executing request to " + req.getURI().toString());
-
-//      HttpHost target = new HttpHost(server.getServer().getHost(), server.getServer().getPort().intValue());
-      while (retries > 0) {
-         retries-- ;
-         try (CloseableHttpResponse resp = httpClient.execute(req)) {
-            RestResponse response = new RestResponse(resp.getStatusLine().getStatusCode());
-
-            response.setContent(readContent(resp));
-            response.setBinaryContent(readBinaryContent(resp));
-
-            if (resp.getAllHeaders() != null) {
-               Map<String, String> headers = new HashMap<>();
-               for (Header header : resp.getAllHeaders()) {
-                  headers.put(header.getName(), header.getValue());
-               }
-               response.setHeaderParams(headers);
-            }
-
-            response.setRedirectUrl(getRedirectUrl(resp));
-
-            return response;
-         }
-         catch (IOException e) {
-            getLogger().error(de.mss.utils.Tools.formatLoggingId(loggingId) + "executing request failed. " + retries + " retries left", e);
-         }
-      }
-      return null;
+      return retBuilder;
    }
 
 
    private static String getRedirectUrl(CloseableHttpResponse resp) {
       if (isRedirect(resp.getStatusLine().getStatusCode())) {
-         Header redirectHeader = resp.getFirstHeader("location");
-         if (redirectHeader != null)
+         final Header redirectHeader = resp.getFirstHeader("location");
+         if (redirectHeader != null) {
             return redirectHeader.getValue();
+         }
       }
 
       return null;
-   }
-
-
-   private byte[] readBinaryContent(CloseableHttpResponse resp) throws MssException {
-      if (resp.getEntity() == null || !this.binaryResponse)
-         return null;
-
-      try (InputStream s = resp.getEntity().getContent()) {
-         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-         int nRead;
-         byte[] data = new byte[16384];
-
-         while ((nRead = s.read(data, 0, data.length)) != -1) {
-            buffer.write(data, 0, nRead);
-         }
-
-         return buffer.toByteArray();
-      }
-      catch (UnsupportedOperationException | IOException e) {
-         throw new MssException(de.mss.net.exception.ErrorCodes.ERROR_METHOD_NOT_SUPPORTED, e);
-      }
-
-   }
-
-
-   private String readContent(CloseableHttpResponse resp) throws MssException {
-
-      if (resp.getEntity() == null || this.binaryResponse)
-         return null;
-      
-      String encoding = null;
-      if (resp.getEntity().getContentEncoding() != null)
-         encoding = resp.getEntity().getContentEncoding().getValue();
-      
-      if (encoding == null)
-         encoding = "UTF-8";
-      
-      try (BufferedReader br = new BufferedReader(new InputStreamReader(resp.getEntity().getContent(), encoding))) {
-         StringBuilder sb = new StringBuilder();
-         
-         String line = null;
-         while ((line = br.readLine()) != null) {
-            if (sb.length() > 0)
-               sb.append(System.getProperty("line.separator"));
-            sb.append(line);
-         }
-
-         return sb.toString();
-      }
-      catch (UnsupportedOperationException | IOException e) {
-         throw new MssException(de.mss.net.exception.ErrorCodes.ERROR_METHOD_NOT_SUPPORTED, e);
-      }
    }
 
 
@@ -235,8 +101,238 @@ public class RestExecutor {
    }
 
 
+   private Logger logger = defaultLogger;
+
+
+   private int connectionTimeout = 10000;
+
+
+   private int requestTimeout = 180000;
+
+
+   private boolean binaryResponse = false;
+
+
+   private List<RestServer> serverList = null;
+
+
+   public RestExecutor(List<RestServer> servers) {
+      for (final RestServer server : servers) {
+         addServer(server);
+      }
+   }
+
+
+   public RestExecutor(List<RestServer> servers, boolean isBinary) {
+      for (final RestServer server : servers) {
+         addServer(server);
+      }
+      this.binaryResponse = isBinary;
+   }
+
+
+   public RestExecutor(List<RestServer> servers, Logger l) {
+      for (final RestServer server : servers) {
+         addServer(server);
+      }
+
+      setLogger(l);
+   }
+
+
+   public RestExecutor(List<RestServer> servers, Logger l, boolean isBinary) {
+      for (final RestServer server : servers) {
+         addServer(server);
+      }
+
+      this.binaryResponse = isBinary;
+      setLogger(l);
+   }
+
+
+   public RestExecutor(RestServer server) {
+      addServer(server);
+   }
+
+
+   public RestExecutor(RestServer server, boolean isBinary) {
+      addServer(server);
+      this.binaryResponse = isBinary;
+   }
+
+
+   public RestExecutor(RestServer server, Logger l) {
+      addServer(server);
+      setLogger(l);
+   }
+
+
+   public RestExecutor(RestServer server, Logger l, boolean isBinary) {
+      addServer(server);
+      setLogger(l);
+      this.binaryResponse = isBinary;
+   }
+
+
+   public RestExecutor(RestServer[] servers) {
+      for (final RestServer server : servers) {
+         addServer(server);
+      }
+   }
+
+
+   public RestExecutor(RestServer[] servers, boolean isBinary) {
+      for (final RestServer server : servers) {
+         addServer(server);
+      }
+      this.binaryResponse = isBinary;
+   }
+
+
+   public RestExecutor(RestServer[] servers, Logger l) {
+      for (final RestServer server : servers) {
+         addServer(server);
+      }
+
+      setLogger(l);
+   }
+
+
+   public RestExecutor(RestServer[] servers, Logger l, boolean isBinary) {
+      for (final RestServer server : servers) {
+         addServer(server);
+      }
+
+      setLogger(l);
+      this.binaryResponse = isBinary;
+   }
+
+
+   public void addServer(RestServer server) {
+      if (server == null) {
+         return;
+      }
+
+      if (this.serverList == null) {
+         this.serverList = new ArrayList<>();
+      }
+
+      this.serverList.add(server);
+   }
+
+
+   public RestResponse executeRequest(String loggingId, RestRequest request, RestServer server, String bindAddress) throws MssException {
+      if (request == null || server == null || server.getServer() == null) {
+         throw new MssException(de.mss.utils.exception.ErrorCodes.ERROR_INVALID_PARAM, "some required parameter are null");
+      }
+
+      String logId = loggingId;
+      if (!Tools.isSet(logId)) {
+         logId = UUID.randomUUID().toString();
+      }
+
+      final de.mss.utils.StopWatch stopWatch = new de.mss.utils.StopWatch();
+
+      try (CloseableHttpClient httpClient = HttpClientFactory.getHttpClient(server)) {
+         final RestResponse response = executeWithRetry(logId, httpClient, request, server, 3);
+         stopWatch.stop();
+         getLogger()
+               .debug(
+                     de.mss.utils.Tools.formatLoggingId(logId)
+                           + "executing request to "
+                           + server.getServer().getCompleteUrl()
+                           + " done ["
+                           + stopWatch.getDuration()
+                           + " ms]");
+
+         return response;
+      }
+      catch (final Exception e) {
+         throw new MssException(de.mss.net.exception.ErrorCodes.ERROR_UNABLE_TO_EXECUTE_REQUEST, e, "error while working on httpclient");
+      }
+   }
+
+
+   public RestResponse executeRequest(String loggingId, RestRequest request, String bindAddress) throws MssException {
+      String logId = loggingId;
+      if (!Tools.isSet(logId)) {
+         logId = UUID.randomUUID().toString();
+      }
+
+      MssException thrownException = new MssException(de.mss.net.exception.ErrorCodes.ERROR_UNABLE_TO_EXECUTE_REQUEST);
+
+      for (final RestServer server : this.serverList) {
+         try {
+            return executeRequest(logId, request, server, bindAddress);
+         }
+         catch (final MssException e) {
+            thrownException = e;
+            getLogger()
+                  .debug(
+                        de.mss.utils.Tools.formatLoggingId(logId)
+                              + "could not execute request for server "
+                              + (server.getServer() != null ? server.getServer().getUrl() : "null"),
+                        e);
+         }
+      }
+      throw thrownException;
+   }
+
+
+   private RestResponse executeWithRetry(String loggingId, CloseableHttpClient httpClient, RestRequest request, RestServer server, int retryCount)
+         throws MssException {
+      int retries = retryCount;
+      final HttpUriRequest req = getRequestBuilder(request, server).build();
+
+      getLogger().debug(de.mss.utils.Tools.formatLoggingId(loggingId) + "executing request to " + req.getURI().toString());
+
+      //      HttpHost target = new HttpHost(server.getServer().getHost(), server.getServer().getPort().intValue());
+      while (retries > 0) {
+         retries-- ;
+         try (CloseableHttpResponse resp = httpClient.execute(req)) {
+            final RestResponse response = new RestResponse(resp.getStatusLine().getStatusCode());
+
+            response.setContent(readContent(resp));
+            response.setBinaryContent(readBinaryContent(resp));
+
+            if (resp.getAllHeaders() != null) {
+               final Map<String, String> headers = new HashMap<>();
+               for (final Header header : resp.getAllHeaders()) {
+                  headers.put(header.getName(), header.getValue());
+               }
+               response.setHeaderParams(headers);
+            }
+
+            response.setRedirectUrl(getRedirectUrl(resp));
+
+            return response;
+         }
+         catch (final IOException e) {
+            getLogger().error(de.mss.utils.Tools.formatLoggingId(loggingId) + "executing request failed. " + retries + " retries left", e);
+         }
+      }
+      return null;
+   }
+
+
+   public long getConnectionTimeout() {
+      return this.connectionTimeout / 1000;
+   }
+
+
+   public Logger getLogger() {
+      return this.logger;
+   }
+
+
    private RequestBuilder getRequestBuilder(RestRequest request, RestServer server) throws MssException {
       RequestBuilder requestBuilder;
+
+      if (request.getMethod() == null) {
+         throw new MssException(
+               de.mss.net.exception.ErrorCodes.ERROR_METHOD_NOT_SUPPORTED,
+               "the method is not supported");
+      }
 
       switch (request.getMethod()) {
          case DELETE:
@@ -258,7 +354,7 @@ public class RestExecutor {
          default:
             throw new MssException(
                   de.mss.net.exception.ErrorCodes.ERROR_METHOD_NOT_SUPPORTED,
-                  "the method '" + request.getMethod().getMethod() + "' is not supported");
+                  "the method '" + request.getMethod() + "' is not supported");
       }
 
       requestBuilder = applyProxy(requestBuilder, server.getProxy());
@@ -266,88 +362,79 @@ public class RestExecutor {
       requestBuilder = applyParams(requestBuilder, request.getUrlParams());
       requestBuilder = applyParams(requestBuilder, request.getPostParams());
       requestBuilder = applyUrlAndParams(requestBuilder, server.getServer().getCompleteUrl() + "/" + request.getUrl(), request.getUrlParams());
-      
-      RequestConfig conf = RequestConfig
+
+      final RequestConfig conf = RequestConfig
             .custom()
             .setConnectionRequestTimeout(this.requestTimeout)
             .setConnectTimeout(this.connectionTimeout)
             .setSocketTimeout(this.connectionTimeout)
             .build();
-      
+
       requestBuilder.setConfig(conf);
 
       return requestBuilder;
    }
 
 
-   private static RequestBuilder applyUrlAndParams(RequestBuilder requestBuilder, String url, Map<String, String> urlParams) {
-      RequestBuilder retBuilder = requestBuilder;
-
-      String u = url;
-
-      if (urlParams != null)
-         for (String key : urlParams.keySet()) {
-            u = u.replaceAll("\\{" + key + "\\}", urlParams.get(key));
-         }
-
-      retBuilder.setUri(u);
-
-      return retBuilder;
+   public long getRequestTimeout() {
+      return this.requestTimeout / 1000;
    }
 
 
-   private static RequestBuilder applyHeaderParams(RequestBuilder requestBuilder, Map<String, String> headerParams) {
-      RequestBuilder retBuilder = requestBuilder;
-
-      if (headerParams != null)
-         headerParams.forEach((key, value) -> retBuilder.addHeader(key.toLowerCase(), value));
-
-      return retBuilder;
-   }
-
-
-   private static RequestBuilder applyParams(RequestBuilder requestBuilder, Map<String, String> urlParams) {
-      RequestBuilder retBuilder = requestBuilder;
-
-      if (urlParams != null)
-         urlParams.forEach((key, value) -> retBuilder.addParameter(key, value));
-
-      return retBuilder;
-   }
-
-
-   private static RequestBuilder applyProxy(RequestBuilder requestBuilder, AuthenticatedServer proxy) {
-      RequestBuilder retBuilder = requestBuilder;
-
-      if (proxy != null && Tools.isSet(proxy.getUser()) && Tools.isSet(proxy.getPassword())) {
-         HttpHost p = new HttpHost(proxy.getHost(), proxy.getPort().intValue(), proxy.getProtocol().getProtocol());
-         RequestConfig conf = RequestConfig.custom().setProxy(p).build();
-         retBuilder.setConfig(conf);
+   private byte[] readBinaryContent(CloseableHttpResponse resp) throws MssException {
+      if (resp.getEntity() == null || !this.binaryResponse) {
+         return null;
       }
 
-      return retBuilder;
+      try (InputStream s = resp.getEntity().getContent()) {
+         final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+         int nRead;
+         final byte[] data = new byte[16384];
+
+         while ((nRead = s.read(data, 0, data.length)) != -1) {
+            buffer.write(data, 0, nRead);
+         }
+
+         return buffer.toByteArray();
+      }
+      catch (UnsupportedOperationException | IOException e) {
+         throw new MssException(de.mss.net.exception.ErrorCodes.ERROR_METHOD_NOT_SUPPORTED, e);
+      }
+
    }
 
 
-   public void addServer(RestServer server) {
-      if (server == null)
-         return;
+   private String readContent(CloseableHttpResponse resp) throws MssException {
 
-      if (this.serverList == null)
-         this.serverList = new ArrayList<>();
+      if (resp.getEntity() == null || this.binaryResponse) {
+         return null;
+      }
 
-      this.serverList.add(server);
-   }
+      String encoding = null;
+      if (resp.getEntity().getContentEncoding() != null) {
+         encoding = resp.getEntity().getContentEncoding().getValue();
+      }
 
+      if (encoding == null) {
+         encoding = "UTF-8";
+      }
 
-   public void setLogger(Logger l) {
-      if (l != null)
-         this.logger = l;
-   }
+      try (BufferedReader br = new BufferedReader(new InputStreamReader(resp.getEntity().getContent(), encoding))) {
+         final StringBuilder sb = new StringBuilder();
 
+         String line = null;
+         while ((line = br.readLine()) != null) {
+            if (sb.length() > 0) {
+               sb.append(System.getProperty("line.separator"));
+            }
+            sb.append(line);
+         }
 
-   public Logger getLogger() {
-      return this.logger;
+         return sb.toString();
+      }
+      catch (UnsupportedOperationException | IOException e) {
+         throw new MssException(de.mss.net.exception.ErrorCodes.ERROR_METHOD_NOT_SUPPORTED, e);
+      }
    }
 
 
@@ -356,17 +443,14 @@ public class RestExecutor {
    }
 
 
+   public void setLogger(Logger l) {
+      if (l != null) {
+         this.logger = l;
+      }
+   }
+
+
    public void setRequestTimeout(int sec) {
       this.requestTimeout = sec * 1000;
-   }
-
-
-   public long getConnectionTimeout() {
-      return this.connectionTimeout / 1000;
-   }
-
-
-   public long getRequestTimeout() {
-      return this.requestTimeout / 1000;
    }
 }

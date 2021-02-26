@@ -20,15 +20,12 @@ public abstract class BaseCall<T extends WebServiceRequest, R extends WebService
    }
 
 
-   protected abstract R doAction(String loggingId, T request) throws MssException;
-
-
    public R action(String loggingId, T request) {
       try {
          R response = null;
 
          if (request == null) {
-            throw new MssException(de.mss.utils.exception.ErrorCodes.ERROR_INVALID_PARAM, "request must not be null");
+            throw new MssException(this.defaultError, "request must not be null");
          }
 
          request.checkRequiredFields();
@@ -49,6 +46,23 @@ public abstract class BaseCall<T extends WebServiceRequest, R extends WebService
    }
 
 
+   protected R afterAction(String loggingId, T request, R response) throws MssException {
+      final R ret = response;
+
+      if (ret == null) {
+         throw new MssException(
+               this.defaultError,
+               "response must not be null");
+      }
+
+      ret.setErrorCode(Integer.valueOf(0));
+      ret.setErrorText(null);
+      ret.setStatusCode(Integer.valueOf(HttpServletResponse.SC_OK));
+
+      return ret;
+   }
+
+
    @SuppressWarnings("unused")
    protected void beforeAction(String loggingId, T request) throws MssException {
       // nothing to do here
@@ -61,20 +75,11 @@ public abstract class BaseCall<T extends WebServiceRequest, R extends WebService
    }
 
 
-   protected R afterAction(String loggingId, T request, R response) throws MssException {
-      final R ret = response;
+   protected abstract R doAction(String loggingId, T request) throws MssException;
 
-      if (ret == null) {
-         throw new MssException(
-               de.mss.utils.exception.ErrorCodes.ERROR_INVALID_PARAM,
-               "response must not be null");
-      }
 
-      ret.setErrorCode(Integer.valueOf(0));
-      ret.setErrorText(null);
-      ret.setStatusCode(Integer.valueOf(HttpServletResponse.SC_OK));
-
-      return ret;
+   public Error getError() {
+      return this.defaultError;
    }
 
 
@@ -83,13 +88,8 @@ public abstract class BaseCall<T extends WebServiceRequest, R extends WebService
 
       response.setStatusCode(Integer.valueOf(HttpServletResponse.SC_BAD_REQUEST));
 
-      if (e.getError() != null) {
-         response.setErrorCode(Integer.valueOf(e.getError().getErrorCode()));
-         response.setErrorText(e.getError().getErrorText());
-      } else {
-         response.setErrorCode(Integer.valueOf(this.defaultError.getErrorCode()));
-         response.setErrorText(this.defaultError.getErrorText());
-      }
+      response.setErrorCode(Integer.valueOf(e.getError().getErrorCode()));
+      response.setErrorText(e.getError().getErrorText());
 
       if (e.getAltErrorCode() != 0) {
          response.setErrorCode(Integer.valueOf(e.getAltErrorCode()));
@@ -100,10 +100,5 @@ public abstract class BaseCall<T extends WebServiceRequest, R extends WebService
       }
 
       return response;
-   }
-
-
-   public Error getError() {
-      return this.defaultError;
    }
 }

@@ -11,8 +11,9 @@ public class WebServiceRequest implements java.io.Serializable {
    @HeaderParam(value = "loggingId")
    private String            loggingId        = null;
 
-   public void setLoggingId(String l) {
-      this.loggingId = l;
+   @SuppressWarnings("unused")
+   public void checkRequiredFields() throws MssException {
+      // nothing to do here
    }
 
 
@@ -21,9 +22,8 @@ public class WebServiceRequest implements java.io.Serializable {
    }
 
 
-   @SuppressWarnings("unused")
-   public void checkRequiredFields() throws MssException {
-      // nothing to do here
+   public void setLoggingId(String l) {
+      this.loggingId = l;
    }
 
 

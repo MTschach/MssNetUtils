@@ -10,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.PathParam;
@@ -32,45 +33,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 public abstract class WebServiceCaller<T extends WebServiceRequest, R extends WebServiceResponse> {
 
-   private String        dateFormat = "yyyyMMdd'T'HHmmssSSSZ";
-
-   private static Logger logger     = null;
-
-   protected abstract void addPostParams(RestRequest restRequest, T request, List<Field> fields) throws MssException;
-
-
-   protected abstract R parseContent(String content, R response) throws MssException;
-
-
-   public R call(String loggingId, RestServer[] servers, String url, RestMethod method, T request, R responseClass, int maxRetries)
-         throws MssException {
-
-      final List<Field> fields = getCallableFields(request.getClass());
-      final RestRequest restRequest = getRestRequest(method, request, fields);
-      restRequest.setUrl(prepareUrl(url, request, fields));
-
-      final R response = responseClass;
-
-      if (response == null) {
-         return null;
-      }
-
-
-      for (final RestServer server : servers) {
-         try {
-            return call(loggingId, server, restRequest, responseClass, maxRetries);
-         }
-         catch (final MssException e) {
-            getLogger().debug("error while callinig rest server", e);
-            response.setErrorCode(Integer.valueOf(e.getAltErrorCode() != 0 ? e.getAltErrorCode() : e.getError().getErrorCode()));
-            response.setErrorText(e.getAltErrorText() != null ? e.getAltErrorText() : e.getError().getErrorText());
-            response.setStatusCode(Integer.valueOf(HttpServletResponse.SC_BAD_REQUEST));
-         }
-      }
-
-      return response;
-   }
-
+   private static Logger logger = null;
 
    private static List<Field> getCallableFields(Class<? extends WebServiceRequest> clazz) {
       final List<Field> ret = new ArrayList<>();
@@ -84,8 +47,42 @@ public abstract class WebServiceCaller<T extends WebServiceRequest, R extends We
    }
 
 
+   public static Logger getLogger() {
+      if (logger == null) {
+         logger = LogManager.getRootLogger();
+      }
+
+      return logger;
+   }
+
+
+   public static void setLogger(Logger l) {
+      logger = l;
+   }
+
+
+   protected static void sleep(long millies) {
+      try {
+         Thread.sleep(millies);
+      }
+      catch (final InterruptedException e) {
+         getLogger().debug("error while callinig rest server", e);
+         Thread.currentThread().interrupt();
+      }
+   }
+
+
+   private String dateFormat = "yyyyMMdd'T'HHmmssSSSZ";
+
+
+   protected abstract void addPostParams(RestRequest restRequest, T request, List<Field> fields) throws MssException;
+
+
    private R call(String loggingId, RestServer server, RestRequest restRequest, R responseClass, int maxRetries) throws MssException {
 
+      if (restRequest.getHeaderParams() == null || !restRequest.getHeaderParams().containsKey(WebServiceRequestHandler.HEADER_LOGGING_ID)) {
+         restRequest.addHeaderParam(WebServiceRequestHandler.HEADER_LOGGING_ID, loggingId);
+      }
       final RestExecutor exec = new RestExecutor(server);
       int tries = maxRetries;
       RestResponse resp = null;
@@ -126,14 +123,48 @@ public abstract class WebServiceCaller<T extends WebServiceRequest, R extends We
    }
 
 
-   protected static void sleep(long millies) {
-      try {
-         Thread.sleep(millies);
+   public R call(String loggingId, RestServer[] servers, String url, RestMethod method, T request, R responseClass, int maxRetries)
+         throws MssException {
+
+      String logId = loggingId;
+      if (!Tools.isSet(logId)) {
+         logId = UUID.randomUUID().toString();
       }
-      catch (final InterruptedException e) {
-         getLogger().debug("error while callinig rest server", e);
-         Thread.currentThread().interrupt();
+      getLogger().debug(Tools.formatLoggingId(logId) + "Request: " + request);
+
+      final List<Field> fields = getCallableFields(request.getClass());
+      final RestRequest restRequest = getRestRequest(method, request, fields);
+      restRequest.setUrl(prepareUrl(url, request, fields));
+
+      final R response = responseClass;
+
+      if (response == null) {
+         return null;
       }
+
+
+      for (final RestServer server : servers) {
+         try {
+            final R resp = call(logId, server, restRequest, responseClass, maxRetries);
+
+            getLogger().debug(Tools.formatLoggingId(logId) + "Response: " + resp);
+
+            return resp;
+         }
+         catch (final MssException e) {
+            getLogger().debug(Tools.formatLoggingId(logId) + "error while callinig rest server", e);
+            response.setErrorCode(Integer.valueOf(e.getAltErrorCode() != 0 ? e.getAltErrorCode() : e.getError().getErrorCode()));
+            response.setErrorText(e.getAltErrorText() != null ? e.getAltErrorText() : e.getError().getErrorText());
+            response.setStatusCode(Integer.valueOf(HttpServletResponse.SC_BAD_REQUEST));
+         }
+      }
+
+      return response;
+   }
+
+
+   public String getDateFormat() {
+      return this.dateFormat;
    }
 
 
@@ -155,6 +186,43 @@ public abstract class WebServiceCaller<T extends WebServiceRequest, R extends We
 
       return req;
    }
+
+
+   protected String getStringValue(T request, String fieldName) throws MssException {
+      if (request == null || !Tools.isSet(fieldName)) {
+         return null;
+      }
+
+      try {
+         final Object prop = PropertyUtils.getProperty(request, fieldName);
+
+         if (prop == null) {
+            return null;
+         } else if (prop instanceof String) {
+            return (String)prop;
+         } else if (prop instanceof BigDecimal) {
+            return ((BigDecimal)prop).toString();
+         } else if (prop instanceof BigInteger) {
+            return ((BigInteger)prop).toString();
+         } else if (prop instanceof Double) {
+            return ((Double)prop).toString();
+         } else if (prop instanceof Float) {
+            return ((Float)prop).toString();
+         } else if (prop instanceof Integer) {
+            return ((Integer)prop).toString();
+         } else if (prop instanceof java.util.Date) {
+            return new SimpleDateFormat(this.dateFormat).format((java.util.Date)prop);
+         } else {
+            return prop.toString();
+         }
+      }
+      catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+         throw new MssException(de.mss.net.exception.ErrorCodes.ERROR_NOT_MAPPABLE, e, "could not get value of field '" + fieldName + "'");
+      }
+   }
+
+
+   protected abstract R parseContent(String content, R response) throws MssException;
 
 
    protected String prepareUrl(String url, T request, List<Field> fields) {
@@ -195,60 +263,7 @@ public abstract class WebServiceCaller<T extends WebServiceRequest, R extends We
    }
 
 
-   protected String getStringValue(T request, String fieldName) throws MssException {
-      if (request == null || !Tools.isSet(fieldName)) {
-         return null;
-      }
-
-      try {
-         final Object prop = PropertyUtils.getProperty(request, fieldName);
-
-         if (prop == null) {
-            return null;
-         } else if (prop instanceof String) {
-            return (String)prop;
-         } else if (prop instanceof BigDecimal) {
-            return ((BigDecimal)prop).toString();
-         } else if (prop instanceof BigInteger) {
-            return ((BigInteger)prop).toString();
-         } else if (prop instanceof Double) {
-            return ((Double)prop).toString();
-         } else if (prop instanceof Float) {
-            return ((Float)prop).toString();
-         } else if (prop instanceof Integer) {
-            return ((Integer)prop).toString();
-         } else if (prop instanceof java.util.Date) {
-            return new SimpleDateFormat(this.dateFormat).format((java.util.Date)prop);
-         } else {
-            return prop.toString();
-         }
-      }
-      catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-         throw new MssException(de.mss.net.exception.ErrorCodes.ERROR_NOT_MAPPABLE, e, "could not get value of field '" + fieldName + "'");
-      }
-   }
-
-
-   public String getDateFormat() {
-      return this.dateFormat;
-   }
-
-
    public void setDateFormat(String f) {
       this.dateFormat = f;
-   }
-
-
-   public static Logger getLogger() {
-      if (logger == null) {
-         logger = LogManager.getRootLogger();
-      }
-
-      return logger;
-   }
-
-
-   public static void setLogger(Logger l) {
-      logger = l;
    }
 }

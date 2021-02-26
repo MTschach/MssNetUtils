@@ -18,10 +18,20 @@ public class RestServer {
       setServer(url);
       setProxy(proxyUrl);
    }
-   
 
-   public void setServer(String url) throws MssException {
-      this.server = new Server(url);
+
+   public AuthenticatedServer getProxy() {
+      return this.proxy;
+   }
+
+
+   public Server getServer() {
+      return this.server;
+   }
+
+
+   public void setProxy(AuthenticatedServer p) {
+      this.proxy = p;
    }
 
 
@@ -35,17 +45,9 @@ public class RestServer {
    }
 
 
-   public void setProxy(AuthenticatedServer p) {
-      this.proxy = p;
-   }
-
-
-   public Server getServer() {
-      return this.server;
-   }
-
-
-   public AuthenticatedServer getProxy() {
-      return this.proxy;
+   public void setServer(String url) throws MssException {
+      if (url != null) {
+         this.server = new Server(url);
+      }
    }
 }

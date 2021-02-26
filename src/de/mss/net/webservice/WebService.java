@@ -27,17 +27,36 @@ public abstract class WebService<R extends WebServiceRequest, T extends WebServi
 
    static Logger             baseLogger       = LogManager.getRootLogger();
 
-   protected Logger          logger           = baseLogger;
+   public static WebServiceResponse getDefaultOkResponse() {
+      final WebServiceResponse resp = new WebServiceResponse();
 
-   protected ConfigFile      cfg;
+      resp.setStatusCode(HttpServletResponse.SC_OK);
 
-   protected Supplier<R>     requestTypeSupplier;
-   protected Supplier<T>     returnTypeSupplier;
-
-   public abstract String getPath();
+      return resp;
+   }
 
 
-   public abstract String getMethod();
+   protected static Map<String, String> getUrlParams(Request request) throws UnsupportedEncodingException {
+      final Map<String, String> ret = new HashMap<>();
+
+      if (request != null && request.getRequestURI() != null && request.getRequestURI().indexOf('?') >= 0) {
+         final String[] params = request.getRequestURI().substring(request.getRequestURI().indexOf('?') + 1).split("&");
+         for (final String keyValue : params) {
+            final String[] kv = keyValue.split("=");
+            ret.put(kv[0], URLDecoder.decode(kv[1], "application/x-www-form-urlencoded"));
+         }
+      }
+
+      return ret;
+   }
+
+   protected Logger      logger = baseLogger;
+   protected ConfigFile  cfg;
+
+   protected Supplier<R> requestTypeSupplier;
+
+
+   protected Supplier<T> returnTypeSupplier;
 
 
    public WebService(Supplier<R> reqts, Supplier<T> rts) {
@@ -46,61 +65,14 @@ public abstract class WebService<R extends WebServiceRequest, T extends WebServi
    }
 
 
-   protected R getParsedRequest(String loggingId, Map<String, String> params, Request baseRequest) throws MssException {
-      final WebServiceJsonDataBuilder<R> in = new WebServiceJsonDataBuilder<>();
-      try {
-         return in.parseData(params, this.requestTypeSupplier.get());
-      }
-      catch (IllegalAccessException | InvocationTargetException | IOException e) {
-         throw new MssException(de.mss.net.exception.ErrorCodes.ERROR_NOT_PARSABLE, e, "could not parse request");
-      }
-   }
-
-
-   @SuppressWarnings("resource")
-   protected int writeResponse(String loggingId, HttpServletResponse httpResponse, T resp) throws MssException {
-      if (resp == null) {
-         return HttpServletResponse.SC_OK;
-      }
-
-      try {
-         int httpStatus = HttpServletResponse.SC_OK;
-
-         if (useErrorCode(resp.getErrorCode())) {
-            httpStatus = resp.getErrorCode().intValue();
-         } else if (useErrorCode(resp.getStatusCode())) {
-            httpStatus = resp.getStatusCode().intValue();
-         } else {
-            resp.setErrorCode(0);
-            resp.setErrorText(null);
-            resp.setStatusCode(httpStatus);
-         }
-
-         httpResponse.getWriter().write(new WebServiceJsonDataBuilder<T>().writeData(resp));
-         httpResponse.getWriter().flush();
-         httpResponse.getWriter().close();
-
-         return httpStatus;
-      }
-      catch (final IOException e) {
-         throw new MssException(de.mss.net.exception.ErrorCodes.ERROR_RESPONSE_NOT_WRITEABLE, e, "could not write response");
-      }
-   }
-
-
-   private boolean useErrorCode(Integer error) {
-      return error != null && error.intValue() != 0 && error.intValue() / 100 != 2;
-   }
-
-
    @SuppressWarnings("unused")
-   protected void beforeAction(String loggingId, R req) throws MssException {
+   protected void afterAction(String loggingId, R req, T resp) throws MssException {
       // nothing to be done here
    }
 
 
    @SuppressWarnings("unused")
-   protected void afterAction(String loggingId, R req, T resp) throws MssException {
+   protected void beforeAction(String loggingId, R req) throws MssException {
       // nothing to be done here
    }
 
@@ -112,8 +84,54 @@ public abstract class WebService<R extends WebServiceRequest, T extends WebServi
    }
 
 
-   public void setConfig(ConfigFile c) {
-      this.cfg = c;
+   protected Logger getLogger() {
+      if (this.logger == null) {
+         this.logger = baseLogger;
+      }
+
+      return this.logger;
+   }
+
+
+   public abstract String getMethod();
+
+
+   protected R getParsedRequest(String loggingId, Map<String, String> params, Request baseRequest) throws MssException {
+      final WebServiceJsonDataBuilder<R> in = new WebServiceJsonDataBuilder<>();
+      try {
+         final R req = in.parseData(params, this.requestTypeSupplier.get());
+         getLogger().debug(Tools.formatLoggingId(loggingId) + "Request: " + req);
+         return req;
+      }
+      catch (IllegalAccessException | InvocationTargetException | IOException e) {
+         throw new MssException(de.mss.net.exception.ErrorCodes.ERROR_NOT_PARSABLE, e, "could not parse request");
+      }
+   }
+
+
+   public abstract String getPath();
+
+
+   protected int handleException(String loggingId, MssException e, T resp, HttpServletResponse httpResponse) {
+      int statusCode = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
+      if (resp != null && resp.getStatusCode() != null) {
+         statusCode = resp.getStatusCode().intValue();
+      }
+
+      httpResponse.setStatus(statusCode);
+      try {
+         httpResponse.sendError(statusCode, e.toString());
+      }
+      catch (final IOException e1) {
+         Tools.doNullLog(e1);
+      }
+      return statusCode;
+   }
+
+
+   @SuppressWarnings("unused")
+   protected T handleRequest(String loggingId, R req) throws MssException {
+      return this.returnTypeSupplier.get();
    }
 
 
@@ -161,35 +179,8 @@ public abstract class WebService<R extends WebServiceRequest, T extends WebServi
    }
 
 
-   @SuppressWarnings("unused")
-   protected T handleRequest(String loggingId, R req) throws MssException {
-      return this.returnTypeSupplier.get();
-   }
-
-
-   protected int handleException(String loggingId, MssException e, T resp, HttpServletResponse httpResponse) {
-      int statusCode = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
-      if (resp != null && resp.getStatusCode() != null) {
-         statusCode = resp.getStatusCode().intValue();
-      }
-
-      httpResponse.setStatus(statusCode);
-      try {
-         httpResponse.sendError(statusCode, e.toString());
-      }
-      catch (final IOException e1) {
-         Tools.doNullLog(e1);
-      }
-      return statusCode;
-   }
-
-
-   protected Logger getLogger() {
-      if (this.logger == null) {
-         this.logger = baseLogger;
-      }
-
-      return this.logger;
+   public void setConfig(ConfigFile c) {
+      this.cfg = c;
    }
 
 
@@ -198,26 +189,40 @@ public abstract class WebService<R extends WebServiceRequest, T extends WebServi
    }
 
 
-   protected static Map<String, String> getUrlParams(Request request) throws UnsupportedEncodingException {
-      final Map<String, String> ret = new HashMap<>();
-
-      if (request != null && request.getRequestURI() != null && request.getRequestURI().indexOf('?') >= 0) {
-         final String[] params = request.getRequestURI().substring(request.getRequestURI().indexOf('?') + 1).split("&");
-         for (final String keyValue : params) {
-            final String[] kv = keyValue.split("=");
-            ret.put(kv[0], URLDecoder.decode(kv[1], "application/x-www-form-urlencoded"));
-         }
-      }
-
-      return ret;
+   private boolean useErrorCode(Integer error) {
+      return error != null && error.intValue() != 0 && error.intValue() / 100 != 2;
    }
 
 
-   public static WebServiceResponse getDefaultOkResponse() {
-      final WebServiceResponse resp = new WebServiceResponse();
+   @SuppressWarnings("resource")
+   protected int writeResponse(String loggingId, HttpServletResponse httpResponse, T resp) throws MssException {
+      if (resp == null) {
+         return HttpServletResponse.SC_OK;
+      }
 
-      resp.setStatusCode(HttpServletResponse.SC_OK);
+      try {
+         int httpStatus = HttpServletResponse.SC_OK;
 
-      return resp;
+         if (useErrorCode(resp.getErrorCode())) {
+            httpStatus = resp.getErrorCode().intValue();
+         } else if (useErrorCode(resp.getStatusCode())) {
+            httpStatus = resp.getStatusCode().intValue();
+         } else {
+            resp.setErrorCode(0);
+            resp.setErrorText(null);
+            resp.setStatusCode(httpStatus);
+         }
+
+         getLogger().debug(Tools.formatLoggingId(loggingId) + "Response: " + resp);
+
+         httpResponse.getWriter().write(new WebServiceJsonDataBuilder<T>().writeData(resp));
+         httpResponse.getWriter().flush();
+         httpResponse.getWriter().close();
+
+         return httpStatus;
+      }
+      catch (final IOException e) {
+         throw new MssException(de.mss.net.exception.ErrorCodes.ERROR_RESPONSE_NOT_WRITEABLE, e, "could not write response");
+      }
    }
 }

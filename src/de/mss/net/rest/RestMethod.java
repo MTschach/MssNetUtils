@@ -1,10 +1,13 @@
 package de.mss.net.rest;
 
+import java.util.function.Supplier;
+
 import de.mss.utils.exception.MssException;
 
 public enum RestMethod {
 
    //@formatter:off
+   UNKNOWN        (""),
    GET            ("GET"),
    POST           ("POST"),
    PATCH          ("PATCH"),
@@ -13,7 +16,22 @@ public enum RestMethod {
    //@formatter:on
 
 
+   public static <T extends MssException> RestMethod getByMethod(String m, Supplier<T> throwException) throws T {
+      for (final RestMethod method : RestMethod.values()) {
+         if (method.getMethod().equalsIgnoreCase(m)) {
+            return method;
+         }
+      }
+
+      if (throwException != null) {
+         throw throwException.get();
+      }
+
+      return null;
+   }
+
    private String method = null;
+
 
    private RestMethod(String m) {
       this.method = m;
@@ -22,17 +40,5 @@ public enum RestMethod {
 
    public String getMethod() {
       return this.method;
-   }
-
-
-   public static RestMethod getByMethod(String m) throws MssException {
-      for (RestMethod method : RestMethod.values()) {
-         if (method.getMethod().equalsIgnoreCase(m))
-            return method;
-      }
-
-      throw new de.mss.utils.exception.MssException(
-            de.mss.net.exception.ErrorCodes.ERROR_PROTOCOL_NOT_SUPPORTED,
-            "the method '" + m + "' is not supported");
    }
 }
