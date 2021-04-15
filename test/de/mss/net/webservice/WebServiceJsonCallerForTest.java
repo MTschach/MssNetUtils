@@ -15,6 +15,11 @@ public class WebServiceJsonCallerForTest<T extends WebServiceRequest, R extends 
    }
 
 
+   public R parseContentTest(String content, R response) throws MssException {
+      return super.parseContent(content, response);
+   }
+
+
    public String prepareUrlForTest(String url, T request, List<Field> fields) {
       return prepareUrl(url, request, fields);
    }

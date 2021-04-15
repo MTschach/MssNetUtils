@@ -10,18 +10,8 @@ public class WebServiceResponse implements java.io.Serializable {
    private byte[]            binaryContent    = null;
 
 
-   public void setErrorCode(Integer e) {
-      this.errorCode = e;
-   }
-
-
-   public void setErrorText(String e) {
-      this.errorText = e;
-   }
-
-
-   public void setStatusCode(Integer i) {
-      this.statusCode = i;
+   public byte[] getBinaryContent() {
+      return this.binaryContent;
    }
 
 
@@ -55,13 +45,23 @@ public class WebServiceResponse implements java.io.Serializable {
    }
 
 
-   public byte[] getBinaryContent() {
-      return this.binaryContent;
+   public void setBinaryContent(byte[] b) {
+      this.binaryContent = b;
    }
 
 
-   public void setBinaryContent(byte[] b) {
-      this.binaryContent = b;
+   public void setErrorCode(Integer e) {
+      this.errorCode = e;
+   }
+
+
+   public void setErrorText(String e) {
+      this.errorText = e;
+   }
+
+
+   public void setStatusCode(Integer i) {
+      this.statusCode = i;
    }
 
 
@@ -70,28 +70,19 @@ public class WebServiceResponse implements java.io.Serializable {
       final StringBuilder sb = new StringBuilder();
 
       if (this.errorCode != null) {
-         sb.append("errorCode: " + this.errorCode.toString());
+         sb.append("errorCode {" + this.errorCode.toString() + "} ");
       }
 
       if (this.statusCode != null) {
-         if (sb.length() > 0) {
-            sb.append("; ");
-         }
-         sb.append("statusCode: " + this.statusCode.toString());
+         sb.append("statusCode {" + this.statusCode.toString() + "} ");
       }
 
       if (this.errorText != null) {
-         if (sb.length() > 0) {
-            sb.append("; ");
-         }
-         sb.append("errorText: " + this.errorText);
+         sb.append("errorText {" + this.errorText + "} ");
       }
 
       if (this.binaryContent != null) {
-         if (sb.length() > 0) {
-            sb.append("; ");
-         }
-         sb.append("binaryContent: [" + this.binaryContent.length + "Bytes]");
+         sb.append("binaryContent {" + this.binaryContent.length + " bytes} ");
       }
 
       return sb.toString();

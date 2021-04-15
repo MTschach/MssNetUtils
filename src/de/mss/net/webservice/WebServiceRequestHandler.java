@@ -23,53 +23,151 @@ import jakarta.servlet.http.HttpServletResponse;
 
 public class WebServiceRequestHandler extends AbstractHandler {
 
-   private static Logger                                          logger            = null;
+   private static Logger      logger            = null;
 
-   Map<String, WebService<WebServiceRequest, WebServiceResponse>> serviceList       = null;
+   public static final String HEADER_LOGGING_ID = "loggingId";
 
-   public static final String                                     HEADER_LOGGING_ID = "LOGGING-ID";
-
-   private final List<SpecialWebServiceRequestHandler>            specialHandlers   = new ArrayList<>();
-
-   private List<String>                                           headersToCopy     = new ArrayList<>();
-
-
-   @Override
-   public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response)
-         throws IOException,
-         ServletException {
-
-      String loggingId = null;
-      String method = "";
-      if (request != null) {
-         loggingId = request.getHeader(HEADER_LOGGING_ID);
-         method = request.getMethod();
+   @SuppressWarnings("resource")
+   private static Map<String, String> getBodyParams(Request request, Map<String, String> params) {
+      Map<String, String> ret = params;
+      if (ret == null) {
+         ret = new HashMap<>();
       }
 
-      if (!de.mss.utils.Tools.isSet(loggingId)) {
-         loggingId = UUID.randomUUID().toString();
+      if ("POST".equalsIgnoreCase(request.getMethod())) {
+         try {
+            ret.put("body", request.getReader().lines().collect(Collectors.joining(System.lineSeparator())));
+         }
+         catch (final IOException e) {
+            Tools.doNullLog(e);
+         }
       }
 
-      response.setHeader(HEADER_LOGGING_ID, loggingId);
-      response.setHeader("Access-Control-Expose-Headers", HEADER_LOGGING_ID);
-      addCorsHeaders(request, response);
-      copyHeaders(baseRequest, response);
-
-      final WebService<WebServiceRequest, WebServiceResponse> service = findWebService(method + " " + target);
-      if (service == null) {
-         response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-         baseRequest.setHandled(true);
-         return;
-      }
-
-      handleRequest(loggingId, target, service, baseRequest, request, response);
+      return ret;
    }
+
+
+   private static Map<String, String> getHeaderParams(Request request, Map<String, String> params) {
+      Map<String, String> ret = params;
+      if (ret == null) {
+         ret = new HashMap<>();
+      }
+
+      final Enumeration<String> names = request.getHeaderNames();
+      while (names.hasMoreElements()) {
+         final String n = names.nextElement();
+         ret.put(n, request.getHeader(n));
+      }
+
+      return ret;
+   }
+
+
+   public static Logger getLogger() {
+      if (logger == null) {
+         logger = LogManager.getRootLogger();
+      }
+
+      return logger;
+   }
+
+
+   private static Map<String, String> getUrlParams(Request request, Map<String, String> params) {
+      Map<String, String> ret = params;
+      if (ret == null) {
+         ret = new HashMap<>();
+      }
+
+      final Enumeration<String> names = request.getParameterNames();
+      while (names.hasMoreElements()) {
+         final String n = names.nextElement();
+         ret.put(n, request.getParameter(n));
+      }
+
+      return ret;
+   }
+
+
+   private static boolean matches(String key, String target) {
+      final String[] keys = key.split("/");
+      final String[] targets = target.split("/");
+
+      if (keys.length != targets.length) {
+         return false;
+      }
+
+      for (int i = 0; i < keys.length; i++ ) {
+         if (!keys[i].matches("\\{\\w+\\}") && !keys[i].equals(targets[i])) {
+            return false;
+         }
+      }
+
+      return true;
+   }
+
+
+   public static void setLogger(Logger l) {
+      logger = l;
+   }
+
+
+   Map<String, WebService<WebServiceRequest, WebServiceResponse>> serviceList = null;
+
+
+   private final List<SpecialWebServiceRequestHandler> specialHandlers = new ArrayList<>();
+
+
+   private List<String> headersToCopy = new ArrayList<>();
 
 
    protected void addCorsHeaders(HttpServletRequest request, HttpServletResponse response) {
       response.setHeader("Access-Control-Allow-Origin", request.getHeader("Origin"));
       response.addHeader("Access-Control-Request-Methods", "*");
       response.addHeader("Access-Control-Allow-Headers", "*");
+   }
+
+
+   public void addHeaderToCopy(String name) {
+      if (!this.headersToCopy.contains(name)) {
+         this.headersToCopy.add(name);
+      }
+   }
+
+
+   public void addSpecialHandler(SpecialWebServiceRequestHandler handler) {
+      this.specialHandlers.add(handler);
+   }
+
+
+   public void addWebService(String target, WebService<WebServiceRequest, WebServiceResponse> service) {
+      initServiceList();
+
+      this.serviceList.put(target, service);
+   }
+
+
+   public void addWebServices(Map<String, WebService<WebServiceRequest, WebServiceResponse>> list) {
+      initServiceList();
+
+      for (final Entry<String, WebService<WebServiceRequest, WebServiceResponse>> entry : list.entrySet()) {
+         this.serviceList.put(entry.getKey(), entry.getValue());
+      }
+   }
+
+
+   public void clearWebServices() {
+      this.serviceList = new HashMap<>();
+   }
+
+
+   private void copyHeaders(Request request, HttpServletResponse response) {
+      for (final String name : this.headersToCopy) {
+         final String val = request.getHeader(name);
+         if (val != null) {
+            response.addHeader(name, val);
+         }
+      }
+
    }
 
 
@@ -121,21 +219,52 @@ public class WebServiceRequestHandler extends AbstractHandler {
    }
 
 
-   private static boolean matches(String key, String target) {
-      final String[] keys = key.split("/");
-      final String[] targets = target.split("/");
+   private Map<String, String> getPathParams(String target) {
+      final Map<String, String> ret = new HashMap<>();
 
-      if (keys.length != targets.length) {
-         return false;
-      }
+      final String originTarget = findTarget(target);
+      final String[] originParts = originTarget.split("/");
+      final String[] targetParts = target.split("/");
 
-      for (int i = 0; i < keys.length; i++ ) {
-         if (!keys[i].matches("\\{\\w+\\}") && !keys[i].equals(targets[i])) {
-            return false;
+      for (int i = 0; i < originParts.length; i++ ) {
+         if (originParts[i].matches("\\{\\w+\\}")) {
+            ret.put(originParts[i].replaceAll("\\{", "").replaceAll("\\}", ""), targetParts[i]);
          }
       }
 
-      return true;
+      return ret;
+   }
+
+
+   @Override
+   public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response)
+         throws IOException,
+         ServletException {
+
+      String loggingId = null;
+      String method = "";
+      if (request != null) {
+         loggingId = request.getHeader(HEADER_LOGGING_ID);
+         method = request.getMethod();
+      }
+
+      if (!de.mss.utils.Tools.isSet(loggingId)) {
+         loggingId = UUID.randomUUID().toString();
+      }
+
+      response.setHeader(HEADER_LOGGING_ID, loggingId);
+      response.setHeader("Access-Control-Expose-Headers", HEADER_LOGGING_ID);
+      addCorsHeaders(request, response);
+      copyHeaders(baseRequest, response);
+
+      final WebService<WebServiceRequest, WebServiceResponse> service = findWebService(method + " " + target);
+      if (service == null) {
+         response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+         baseRequest.setHandled(true);
+         return;
+      }
+
+      handleRequest(loggingId, target, service, baseRequest, request, response);
    }
 
 
@@ -158,104 +287,10 @@ public class WebServiceRequestHandler extends AbstractHandler {
    }
 
 
-   private void copyHeaders(Request request, HttpServletResponse response) {
-      for (final String name : this.headersToCopy) {
-         final String val = request.getHeader(name);
-         if (val != null) {
-            response.addHeader(name, val);
-         }
+   private void initServiceList() {
+      if (this.serviceList == null) {
+         this.serviceList = new HashMap<>();
       }
-
-   }
-
-
-   private static Map<String, String> getHeaderParams(Request request, Map<String, String> params) {
-      Map<String, String> ret = params;
-      if (ret == null) {
-         ret = new HashMap<>();
-      }
-
-      final Enumeration<String> names = request.getHeaderNames();
-      while (names.hasMoreElements()) {
-         final String n = names.nextElement();
-         ret.put(n, request.getHeader(n));
-      }
-
-      return ret;
-   }
-
-
-   private static Map<String, String> getUrlParams(Request request, Map<String, String> params) {
-      Map<String, String> ret = params;
-      if (ret == null) {
-         ret = new HashMap<>();
-      }
-
-      final Enumeration<String> names = request.getParameterNames();
-      while (names.hasMoreElements()) {
-         final String n = names.nextElement();
-         ret.put(n, request.getParameter(n));
-      }
-
-      return ret;
-   }
-
-
-   private Map<String, String> getPathParams(String target) {
-      final Map<String, String> ret = new HashMap<>();
-
-      final String originTarget = findTarget(target);
-      final String[] originParts = originTarget.split("/");
-      final String[] targetParts = target.split("/");
-
-      for (int i = 0; i < originParts.length; i++ ) {
-         if (originParts[i].matches("\\{\\w+\\}")) {
-            ret.put(originParts[i].replaceAll("\\{", "").replaceAll("\\}", ""), targetParts[i]);
-         }
-      }
-
-      return ret;
-   }
-
-
-   @SuppressWarnings("resource")
-   private static Map<String, String> getBodyParams(Request request, Map<String, String> params) {
-      Map<String, String> ret = params;
-      if (ret == null) {
-         ret = new HashMap<>();
-      }
-
-      if ("POST".equalsIgnoreCase(request.getMethod())) {
-         try {
-            ret.put("body", request.getReader().lines().collect(Collectors.joining(System.lineSeparator())));
-         }
-         catch (final IOException e) {
-            Tools.doNullLog(e);
-         }
-      }
-
-      return ret;
-   }
-
-
-   public void addWebService(String target, WebService<WebServiceRequest, WebServiceResponse> service) {
-      initServiceList();
-
-      this.serviceList.put(target, service);
-   }
-
-
-   public void addWebServices(Map<String, WebService<WebServiceRequest, WebServiceResponse>> list) {
-      initServiceList();
-
-      for (final Entry<String, WebService<WebServiceRequest, WebServiceResponse>> entry : list.entrySet()) {
-         this.serviceList.put(entry.getKey(), entry.getValue());
-      }
-   }
-
-
-   public void clearWebServices() {
-      this.serviceList = new HashMap<>();
    }
 
 
@@ -268,44 +303,11 @@ public class WebServiceRequestHandler extends AbstractHandler {
    }
 
 
-   private void initServiceList() {
-      if (this.serviceList == null) {
-         this.serviceList = new HashMap<>();
-      }
-   }
-
-
-   public static Logger getLogger() {
-      if (logger == null) {
-         logger = LogManager.getRootLogger();
-      }
-
-      return logger;
-   }
-
-
-   public static void setLogger(Logger l) {
-      logger = l;
-   }
-
-
-   public void addSpecialHandler(SpecialWebServiceRequestHandler handler) {
-      this.specialHandlers.add(handler);
-   }
-
-
    public void setHeadersToCopy(List<String> l) {
       this.headersToCopy = l;
 
       if (this.headersToCopy == null) {
          this.headersToCopy = new ArrayList<>();
-      }
-   }
-
-
-   public void addHeaderToCopy(String name) {
-      if (!this.headersToCopy.contains(name)) {
-         this.headersToCopy.add(name);
       }
    }
 }

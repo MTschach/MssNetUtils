@@ -9,6 +9,13 @@ import junit.framework.TestCase;
 
 public class HttpClientFactoryTest extends TestCase {
 
+   @Override
+   public void setUp() throws Exception {
+      super.setUp();
+      HttpClientFactory.initializeHttpClientFactory(null);
+   }
+
+
    @SuppressWarnings("resource")
    @Test
    public void test() throws MssException {

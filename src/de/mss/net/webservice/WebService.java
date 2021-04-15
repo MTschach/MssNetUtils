@@ -1,9 +1,9 @@
 package de.mss.net.webservice;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -36,14 +36,14 @@ public abstract class WebService<R extends WebServiceRequest, T extends WebServi
    }
 
 
-   protected static Map<String, String> getUrlParams(Request request) throws UnsupportedEncodingException {
+   protected static Map<String, String> getUrlParams(Request request) {
       final Map<String, String> ret = new HashMap<>();
 
       if (request != null && request.getRequestURI() != null && request.getRequestURI().indexOf('?') >= 0) {
          final String[] params = request.getRequestURI().substring(request.getRequestURI().indexOf('?') + 1).split("&");
          for (final String keyValue : params) {
             final String[] kv = keyValue.split("=");
-            ret.put(kv[0], URLDecoder.decode(kv[1], "application/x-www-form-urlencoded"));
+            ret.put(kv[0], URLDecoder.decode(kv[1], StandardCharsets.UTF_8));
          }
       }
 

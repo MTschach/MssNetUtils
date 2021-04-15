@@ -1,11 +1,12 @@
 package de.mss.net.webservice;
 
+import java.io.IOException;
 import java.util.List;
 
 public class WebServiceTestResponse extends WebServiceResponse {
 
    /**
-    * 
+    *
     */
    private static final long serialVersionUID = 1L;
 
@@ -15,8 +16,8 @@ public class WebServiceTestResponse extends WebServiceResponse {
    private List<WebServiceAddress> address;
 
 
-   public void setState(String s) {
-      this.state = s;
+   public List<WebServiceAddress> getAddress() {
+      return this.address;
    }
 
 
@@ -30,8 +31,12 @@ public class WebServiceTestResponse extends WebServiceResponse {
    }
 
 
-   public List<WebServiceAddress> getAddress() {
-      return this.address;
+   public void setState(String s) throws IOException {
+      if ("ioex".equals(s)) {
+         throw new IOException();
+      }
+
+      this.state = s;
    }
 
 }

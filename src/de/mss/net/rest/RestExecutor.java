@@ -404,9 +404,20 @@ public class RestExecutor {
    }
 
 
+   @SuppressWarnings("resource")
    private String readContent(CloseableHttpResponse resp) throws MssException {
 
       if (resp.getEntity() == null || this.binaryResponse) {
+         return null;
+      }
+
+      try {
+         if (resp.getEntity().getContent() == null) {
+            return null;
+         }
+      }
+      catch (final Exception e1) {
+         Tools.doNullLog(e1);
          return null;
       }
 

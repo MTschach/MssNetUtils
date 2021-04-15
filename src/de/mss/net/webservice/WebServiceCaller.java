@@ -72,6 +72,9 @@ public abstract class WebServiceCaller<T extends WebServiceRequest, R extends We
    }
 
 
+   private boolean binaryContent = false;
+
+
    private String dateFormat = "yyyyMMdd'T'HHmmssSSSZ";
 
 
@@ -80,10 +83,10 @@ public abstract class WebServiceCaller<T extends WebServiceRequest, R extends We
 
    private R call(String loggingId, RestServer server, RestRequest restRequest, R responseClass, int maxRetries) throws MssException {
 
-      if (restRequest.getHeaderParams() == null || !restRequest.getHeaderParams().containsKey(WebServiceRequestHandler.HEADER_LOGGING_ID)) {
+      if (!restRequest.getHeaderParams().containsKey(WebServiceRequestHandler.HEADER_LOGGING_ID)) {
          restRequest.addHeaderParam(WebServiceRequestHandler.HEADER_LOGGING_ID, loggingId);
       }
-      final RestExecutor exec = new RestExecutor(server);
+      final RestExecutor exec = new RestExecutor(server, this.binaryContent);
       int tries = maxRetries;
       RestResponse resp = null;
       do {
@@ -91,19 +94,20 @@ public abstract class WebServiceCaller<T extends WebServiceRequest, R extends We
          tries-- ;
          sleep(250);
       }
-      while (tries > 0 && (resp == null || resp.getHttpStatus() != HttpServletResponse.SC_OK));
+      while (tries > 0 && (resp == null || !isOkStatus(resp.getHttpStatus())));
 
       if (resp == null) {
          throw new MssException(de.mss.net.exception.ErrorCodes.ERROR_NO_RESPONSE, "no response received");
       }
 
-      if (resp.getHttpStatus() != HttpServletResponse.SC_OK) {
+      if (!isOkStatus(resp.getHttpStatus())) {
          throw new MssException(
                de.mss.net.exception.ErrorCodes.ERROR_NO_RESPONSE_WITH_ERROR,
                "non OK status received " + (resp.getContent() != null ? resp.getContent() : ""));
       }
 
       R response = null;
+      final int httpStatus = resp.getHttpStatus();
 
       if (resp.getContent() != null) {
          response = parseContent(resp.getContent(), responseClass);
@@ -118,6 +122,7 @@ public abstract class WebServiceCaller<T extends WebServiceRequest, R extends We
       }
 
       response.setErrorCode(Integer.valueOf(0));
+      response.setStatusCode(httpStatus);
 
       return response;
    }
@@ -222,6 +227,11 @@ public abstract class WebServiceCaller<T extends WebServiceRequest, R extends We
    }
 
 
+   private boolean isOkStatus(int httpStatus) {
+      return httpStatus / 100 == 2;
+   }
+
+
    protected abstract R parseContent(String content, R response) throws MssException;
 
 
@@ -263,7 +273,17 @@ public abstract class WebServiceCaller<T extends WebServiceRequest, R extends We
    }
 
 
+   public void setBinaryContent() {
+      this.binaryContent = true;
+   }
+
+
    public void setDateFormat(String f) {
       this.dateFormat = f;
+   }
+
+
+   public void unsetBinaryContent() {
+      this.binaryContent = false;
    }
 }
