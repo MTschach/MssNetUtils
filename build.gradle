@@ -36,13 +36,7 @@ allprojects {
 
 
 // In this section you declare where to find the dependencies of your project
-repositories {
-   mavenLocal()
-   jcenter()
-   maven {
-      url 'https://mtschach.jfrog.io/artifactory/mss-repo'
-   }
-}
+apply from: 'https://raw.githubusercontent.com/MTschach/MssUtils/master/artifactory.gradle'
 
 configurations {
    clientCompile
@@ -107,10 +101,6 @@ task fatJar(type: Jar) {
     with jar
 }
 
-
-task publishLocal {
-   dependsOn 'publishToMavenLocal'
-}
 
 apply from: 'https://raw.githubusercontent.com/MTschach/MssUtils/master/deploy.gradle'
 

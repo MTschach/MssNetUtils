@@ -1,15 +1,18 @@
 package de.mss.net.webservice;
 
-import java.io.UnsupportedEncodingException;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
+import org.easymock.EasyMock;
 import org.eclipse.jetty.server.Request;
 import org.junit.Test;
 
 import de.mss.net.rest.RestMethod;
+import de.mss.utils.Tools;
 import de.mss.utils.exception.MssException;
+import jakarta.servlet.http.HttpServletResponse;
 import junit.framework.TestCase;
 
 public class WebServiceTest extends TestCase {
@@ -47,6 +50,19 @@ public class WebServiceTest extends TestCase {
    @Override
    public void tearDown() throws Exception {
       super.tearDown();
+   }
+
+
+   @Test
+   public void testCheckRequest() throws MssException {
+      this.classUnderTest.checkRequest("", new WebServiceTestRequest());
+      try {
+         this.classUnderTest.checkRequest("", null);
+         fail("no exception was thrown");
+      }
+      catch (final MssException e) {
+         assertEquals("ErrorCode", de.mss.utils.exception.ErrorCodes.ERROR_INVALID_PARAM, e.getError());
+      }
    }
 
 
@@ -103,7 +119,7 @@ public class WebServiceTest extends TestCase {
 
 
    @Test
-   public void testGetUrlParams() throws UnsupportedEncodingException {
+   public void testGetUrlParams() {
       Map<String, String> params = WebServiceForTest.getUrlParamsForTest(null);
       assertNotNull("params are not null", params);
       assertTrue("params are empty", params.isEmpty());
@@ -121,6 +137,120 @@ public class WebServiceTest extends TestCase {
       assertEquals("params size", Integer.valueOf(2), Integer.valueOf(params.size()));
       assertEquals("param1", "value1", params.get("param1"));
       assertEquals("param2", "value2", params.get("param2"));
+   }
+
+
+   @Test
+   public void testHandleException() throws IOException {
+      final String loggingId = Tools.getId(new Throwable());
+
+      final WebServiceTestResponse resp = new WebServiceTestResponse();
+
+      final HttpServletResponse respMock = EasyMock.createNiceMock(HttpServletResponse.class);
+
+      respMock.setStatus(EasyMock.eq(HttpServletResponse.SC_INTERNAL_SERVER_ERROR));
+      EasyMock.expectLastCall();
+      respMock.sendError(EasyMock.eq(HttpServletResponse.SC_INTERNAL_SERVER_ERROR), EasyMock.anyString());
+      EasyMock.expectLastCall();
+
+      respMock.setStatus(EasyMock.eq(HttpServletResponse.SC_INTERNAL_SERVER_ERROR));
+      EasyMock.expectLastCall();
+      respMock.sendError(EasyMock.eq(HttpServletResponse.SC_INTERNAL_SERVER_ERROR), EasyMock.anyString());
+      EasyMock.expectLastCall();
+
+      respMock.setStatus(EasyMock.eq(123));
+      EasyMock.expectLastCall();
+      respMock.sendError(EasyMock.eq(123), EasyMock.anyString());
+      EasyMock.expectLastCall();
+
+      respMock.setStatus(EasyMock.eq(HttpServletResponse.SC_INTERNAL_SERVER_ERROR));
+      EasyMock.expectLastCall();
+      respMock.sendError(EasyMock.eq(HttpServletResponse.SC_INTERNAL_SERVER_ERROR), EasyMock.anyString());
+      EasyMock.expectLastCall();
+
+      respMock.setStatus(EasyMock.eq(405));
+      EasyMock.expectLastCall();
+      respMock.sendError(EasyMock.eq(405), EasyMock.anyString());
+      EasyMock.expectLastCall();
+
+      respMock.setStatus(EasyMock.eq(405));
+      EasyMock.expectLastCall();
+      respMock.sendError(EasyMock.eq(405), EasyMock.anyString());
+      EasyMock.expectLastCall().andThrow(new IOException());
+
+      EasyMock.replay(respMock);
+
+      assertEquals(
+            Integer.valueOf(HttpServletResponse.SC_INTERNAL_SERVER_ERROR),
+            Integer
+                  .valueOf(
+                        this.classUnderTest
+                              .handleExceptionForTest(
+                                    loggingId,
+                                    new MssException(de.mss.net.exception.ErrorCodes.ERROR_NO_RESPONSE),
+                                    null,
+                                    respMock)));
+
+
+      assertEquals(
+            Integer.valueOf(HttpServletResponse.SC_INTERNAL_SERVER_ERROR),
+            Integer
+                  .valueOf(
+                        this.classUnderTest
+                              .handleExceptionForTest(
+                                    loggingId,
+                                    new MssException(de.mss.net.exception.ErrorCodes.ERROR_NO_RESPONSE),
+                                    resp,
+                                    respMock)));
+
+      resp.setStatusCode(123);
+      assertEquals(
+            Integer.valueOf(123),
+            Integer
+                  .valueOf(
+                        this.classUnderTest
+                              .handleExceptionForTest(
+                                    loggingId,
+                                    new MssException(de.mss.net.exception.ErrorCodes.ERROR_NO_RESPONSE),
+                                    resp,
+                                    respMock)));
+
+      resp.setStatusCode(null);
+      assertEquals(
+            Integer.valueOf(HttpServletResponse.SC_INTERNAL_SERVER_ERROR),
+            Integer
+                  .valueOf(
+                        this.classUnderTest
+                              .handleExceptionForTest(
+                                    loggingId,
+                                    new MssException(123),
+                                    resp,
+                                    respMock)));
+
+      resp.setStatusCode(123);
+      assertEquals(
+            Integer.valueOf(405),
+            Integer
+                  .valueOf(
+                        this.classUnderTest
+                              .handleExceptionForTest(
+                                    loggingId,
+                                    new MssException(de.mss.net.exception.ErrorCodes.ERROR_METHOD_NOT_SUPPORTED),
+                                    resp,
+                                    respMock)));
+
+      assertEquals(
+            Integer.valueOf(405),
+            Integer
+                  .valueOf(
+                        this.classUnderTest
+                              .handleExceptionForTest(
+                                    loggingId,
+                                    new MssException(de.mss.net.exception.ErrorCodes.ERROR_METHOD_NOT_SUPPORTED),
+                                    resp,
+                                    respMock)));
+
+      EasyMock.verify(respMock);
    }
 
 

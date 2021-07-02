@@ -1,6 +1,5 @@
 package de.mss.net.webservice;
 
-import java.io.UnsupportedEncodingException;
 import java.util.Map;
 import java.util.function.Supplier;
 
@@ -8,12 +7,13 @@ import org.eclipse.jetty.server.Request;
 
 import de.mss.net.rest.RestMethod;
 import de.mss.utils.exception.MssException;
+import jakarta.servlet.http.HttpServletResponse;
 
 public class WebServiceForTest extends WebService<WebServiceTestRequest, WebServiceTestResponse> {
 
    private static final long serialVersionUID = 2972782037461318009L;
 
-   public static Map<String, String> getUrlParamsForTest(Request request) throws UnsupportedEncodingException {
+   public static Map<String, String> getUrlParamsForTest(Request request) {
       return getUrlParams(request);
    }
 
@@ -22,6 +22,11 @@ public class WebServiceForTest extends WebService<WebServiceTestRequest, WebServ
 
    public WebServiceForTest(Supplier<WebServiceTestRequest> reqts, Supplier<WebServiceTestResponse> rts) {
       super(reqts, rts);
+   }
+
+
+   public void checkRequestForTest(String loggingId, WebServiceTestRequest req) throws MssException {
+      super.checkRequest(loggingId, req);
    }
 
 
@@ -39,6 +44,11 @@ public class WebServiceForTest extends WebService<WebServiceTestRequest, WebServ
    @Override
    public String getPath() {
       return "v1/info";
+   }
+
+
+   public int handleExceptionForTest(String loggingId, MssException e, WebServiceTestResponse resp, HttpServletResponse httpResponse) {
+      return super.handleException(loggingId, e, resp, httpResponse);
    }
 
 

@@ -114,7 +114,9 @@ public abstract class WebService<R extends WebServiceRequest, T extends WebServi
 
    protected int handleException(String loggingId, MssException e, T resp, HttpServletResponse httpResponse) {
       int statusCode = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
-      if (resp != null && resp.getStatusCode() != null) {
+      if (e.getError().getStatusCode() != null) {
+         statusCode = e.getError().getStatusCode().intValue();
+      } else if (resp != null && resp.getStatusCode() != null) {
          statusCode = resp.getStatusCode().intValue();
       }
 
