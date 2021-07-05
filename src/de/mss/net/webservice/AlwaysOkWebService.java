@@ -5,6 +5,7 @@ import java.util.function.Supplier;
 
 import org.eclipse.jetty.server.Request;
 
+import de.mss.net.rest.RestMethod;
 import de.mss.utils.exception.MssException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -23,13 +24,13 @@ public class AlwaysOkWebService<R extends WebServiceRequest,
 
 
    @Override
-   public String getPath() {
-      return "";
+   public RestMethod getMethod() {
+      return RestMethod.UNKNOWN;
    }
 
 
    @Override
-   public String getMethod() {
+   public String getPath() {
       return "";
    }
 

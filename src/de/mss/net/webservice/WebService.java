@@ -15,6 +15,7 @@ import org.apache.logging.log4j.MarkerManager;
 import org.eclipse.jetty.server.Request;
 
 import de.mss.configtools.ConfigFile;
+import de.mss.net.rest.RestMethod;
 import de.mss.utils.Tools;
 import de.mss.utils.exception.MssException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -93,7 +94,12 @@ public abstract class WebService<R extends WebServiceRequest, T extends WebServi
    }
 
 
-   public abstract String getMethod();
+   public abstract RestMethod getMethod();
+
+
+   public String getMethodAsString() {
+      return getMethod().getMethod();
+   }
 
 
    protected R getParsedRequest(String loggingId, Map<String, String> params, Request baseRequest) throws MssException {

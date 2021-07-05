@@ -80,9 +80,9 @@ public class WebServiceTest extends TestCase {
 
    @Test
    public void testGetMethod() {
-      assertEquals("Method GET", RestMethod.GET.getMethod(), this.classUnderTest.getMethod());
+      assertEquals("Method GET", RestMethod.GET, this.classUnderTest.getMethod());
       this.classUnderTest.setMethod(RestMethod.POST);
-      assertEquals("Method GET", RestMethod.POST.getMethod(), this.classUnderTest.getMethod());
+      assertEquals("Method GET", RestMethod.POST, this.classUnderTest.getMethod());
    }
 
 

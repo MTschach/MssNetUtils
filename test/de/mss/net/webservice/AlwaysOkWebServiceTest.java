@@ -3,6 +3,7 @@ package de.mss.net.webservice;
 import org.eclipse.jetty.server.Request;
 import org.junit.Test;
 
+import de.mss.net.rest.RestMethod;
 import junit.framework.TestCase;
 
 public class AlwaysOkWebServiceTest extends TestCase {
@@ -30,7 +31,8 @@ public class AlwaysOkWebServiceTest extends TestCase {
    @Test
    public void testOk() {
       assertEquals("Path", "", this.classUnderTest.getPath());
-      assertEquals("Method", "", this.classUnderTest.getMethod());
+      assertEquals("Method", RestMethod.UNKNOWN, this.classUnderTest.getMethod());
+      assertEquals("Method", RestMethod.UNKNOWN.getMethod(), this.classUnderTest.getMethodAsString());
 
       assertTrue(
             "handleRequest",

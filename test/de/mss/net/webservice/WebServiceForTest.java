@@ -31,8 +31,8 @@ public class WebServiceForTest extends WebService<WebServiceTestRequest, WebServ
 
 
    @Override
-   public String getMethod() {
-      return this.method.getMethod();
+   public RestMethod getMethod() {
+      return this.method;
    }
 
 
