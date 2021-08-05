@@ -34,8 +34,8 @@ allprojects {
    }
 }
 
+apply from: 'https://raw.githubusercontent.com/MTschach/MssUtils/master/deploy.gradle'
 
-// In this section you declare where to find the dependencies of your project
 apply from: 'https://raw.githubusercontent.com/MTschach/MssUtils/master/artifactory.gradle'
 
 configurations {
@@ -100,7 +100,3 @@ task fatJar(type: Jar) {
     from { configurations.clientCompile.collect { it.isDirectory() ? it : zipTree(it) } }
     with jar
 }
-
-
-apply from: 'https://raw.githubusercontent.com/MTschach/MssUtils/master/deploy.gradle'
-
