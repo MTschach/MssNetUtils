@@ -1,4 +1,4 @@
-version = 0.4.0
+version = 0.4.2
 groupId = Mss
 artifactId = MssNetUtils
 licenses = ['Apache 2'] // or something else 

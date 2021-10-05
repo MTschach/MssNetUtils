@@ -19,6 +19,9 @@ public class ErrorCodes implements Serializable {
    public static final Error ERROR_PATH_PARAMETER_NOT_SET    = new Error(ERROR_CODE_BASE + 7, "a path parameter is not set");
    public static final Error ERROR_RESPONSE_NOT_WRITEABLE    = new Error(ERROR_CODE_BASE + 8, "response not writeable");
    public static final Error ERROR_REQUIRED_FIELD_MISSING    = new Error(ERROR_CODE_BASE + 9, "required field is missing");
+   public static final Error ERROR_FIELD_TOO_SHORT           = new Error(ERROR_CODE_BASE + 10, "field value is too short");
+   public static final Error ERROR_FIELD_TOO_LONG            = new Error(ERROR_CODE_BASE + 11, "field value is too long");
+   public static final Error ERROR_FIELD_INVALID_LENGTH      = new Error(ERROR_CODE_BASE + 12, "field value has an invalid length");
 
    private ErrorCodes() {}
 }
