@@ -48,6 +48,9 @@ public class WebServiceTestRequest extends WebServiceRequest {
    @QueryParam(value = "boolVal")
    public Boolean            boolVal;
 
+   @QueryParam(value = "enumVal")
+   public EnumValForTest     enumVal;
+
 
    public BigDecimal getBigDval() {
       return this.bigDval;
@@ -86,6 +89,11 @@ public class WebServiceTestRequest extends WebServiceRequest {
 
    public Double getDoubleVal() {
       return this.doubleVal;
+   }
+
+
+   public EnumValForTest getEnumVal() {
+      return this.enumVal;
    }
 
 
@@ -141,6 +149,11 @@ public class WebServiceTestRequest extends WebServiceRequest {
 
    public void setDoubleVal(Double i) {
       this.doubleVal = i;
+   }
+
+
+   public void setEnumVal(EnumValForTest e) {
+      this.enumVal = e;
    }
 
 

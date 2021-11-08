@@ -61,6 +61,7 @@ public class HttpClientFactoryTest extends TestCase {
    }
 
 
+   @SuppressWarnings("resource")
    @Test
    public void testUser() throws MssException {
       final AuthenticatedServer a = new AuthenticatedServer("http://localhost:8080/info", "user", "pass");

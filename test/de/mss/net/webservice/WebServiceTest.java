@@ -34,6 +34,7 @@ public class WebServiceTest extends TestCase {
       map.put("bigVal", "123");
       map.put("doubleVal", "2.34");
       map.put("floatVal", "3.45");
+      map.put("enumVal", "simple");
 
       return map;
    }

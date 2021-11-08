@@ -39,9 +39,9 @@ apply from: 'https://raw.githubusercontent.com/MTschach/MssUtils/master/deploy.g
 apply from: 'https://raw.githubusercontent.com/MTschach/MssUtils/master/artifactory.gradle'
 
 configurations {
-   clientCompile
-   testCompile.extendsFrom clientCompile
-   compile.extendsFrom clientCompile
+   clientImplementation
+   testImplementation.extendsFrom clientImplementation
+   implementation.extendsFrom clientImplementation
 }
 
 
@@ -63,27 +63,27 @@ sourceSets {
 
 
 dependencies {
-   clientCompile 'Mss:MssConfigTools:latest.release'
-   clientCompile 'Mss:MssUtils:latest.release'
+   clientImplementation 'Mss:MssConfigTools:latest.release'
+   clientImplementation 'Mss:MssUtils:latest.release'
    
-   clientCompile group: 'org.apache.logging.log4j'                                  , name: 'log4j-core'                , version: 'latest.release'
-   clientCompile group: 'org.apache.logging.log4j'                                  , name: 'log4j-api'                 , version: 'latest.release'
-   clientCompile group: 'org.apache.logging.log4j'                                  , name: 'log4j-slf4j-impl'          , version: 'latest.release'
-   clientCompile group: 'org.apache.commons'                                        , name: 'commons-lang3'             , version: 'latest.release'
-   clientCompile group: 'org.apache.httpcomponents'                                 , name: 'httpclient'                , version: 'latest.release'
-   clientCompile group: 'commons-beanutils'                                         , name: 'commons-beanutils'         , version: '1.9.3'
-   clientCompile group: 'commons-cli'                                               , name: 'commons-cli'               , version: '1.4'
-   clientCompile group: 'org.eclipse.jetty'                                         , name: 'jetty-servlet'             , version: 'latest.release'
-   clientCompile group: 'org.eclipse.jetty'                                         , name: 'jetty-server'              , version: 'latest.release'
-   clientCompile group: 'org.eclipse.jetty'                                         , name: 'jetty-http'                , version: 'latest.release'
-   clientCompile group: 'org.codehaus.jackson'                                      , name: 'jackson-core-asl'          , version: 'latest.release'
-   clientCompile group: 'org.codehaus.jackson'                                      , name: 'jackson-mapper-asl'        , version: 'latest.release'
-   clientCompile group: 'javax.ws.rs'                                               , name: 'javax.ws.rs-api'           , version: 'latest.release'
-   clientCompile group: 'org.glassfish.jersey.containers'                           , name: 'jersey-container-servlet'  , version: 'latest.release'
+   clientImplementation group: 'org.apache.logging.log4j'                                  , name: 'log4j-core'                , version: 'latest.release'
+   clientImplementation group: 'org.apache.logging.log4j'                                  , name: 'log4j-api'                 , version: 'latest.release'
+   clientImplementation group: 'org.apache.logging.log4j'                                  , name: 'log4j-slf4j-impl'          , version: 'latest.release'
+   clientImplementation group: 'org.apache.commons'                                        , name: 'commons-lang3'             , version: 'latest.release'
+   clientImplementation group: 'org.apache.httpcomponents'                                 , name: 'httpclient'                , version: 'latest.release'
+   clientImplementation group: 'commons-beanutils'                                         , name: 'commons-beanutils'         , version: '1.9.3'
+   clientImplementation group: 'commons-cli'                                               , name: 'commons-cli'               , version: '1.4'
+   clientImplementation group: 'org.eclipse.jetty'                                         , name: 'jetty-servlet'             , version: 'latest.release'
+   clientImplementation group: 'org.eclipse.jetty'                                         , name: 'jetty-server'              , version: 'latest.release'
+   clientImplementation group: 'org.eclipse.jetty'                                         , name: 'jetty-http'                , version: 'latest.release'
+   clientImplementation group: 'org.codehaus.jackson'                                      , name: 'jackson-core-asl'          , version: 'latest.release'
+   clientImplementation group: 'org.codehaus.jackson'                                      , name: 'jackson-mapper-asl'        , version: 'latest.release'
+   clientImplementation group: 'javax.ws.rs'                                               , name: 'javax.ws.rs-api'           , version: 'latest.release'
+   clientImplementation group: 'org.glassfish.jersey.containers'                           , name: 'jersey-container-servlet'  , version: 'latest.release'
 
 
-	testCompile group: 'junit'                                                 , name: 'junit'                     , version: 'latest.release'
-	testCompile group: 'org.easymock'                                          , name: 'easymock'                  , version: 'latest.release'
+   testImplementation group: 'junit'                                                 , name: 'junit'                     , version: 'latest.release'
+   testImplementation group: 'org.easymock'                                          , name: 'easymock'                  , version: 'latest.release'
 }
 
 jar {

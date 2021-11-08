@@ -217,6 +217,8 @@ public abstract class WebServiceCaller<T extends WebServiceRequest, R extends We
             return ((Integer)prop).toString();
          } else if (prop instanceof java.util.Date) {
             return new SimpleDateFormat(this.dateFormat).format((java.util.Date)prop);
+         } else if (prop instanceof IfRequestEnumeration) {
+            return ((IfRequestEnumeration)prop).getApiValue();
          } else {
             return prop.toString();
          }

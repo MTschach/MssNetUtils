@@ -38,6 +38,7 @@ public class WebServiceJsonCallerTest extends TestCase {
       this.request.body.setContacts(new ArrayList<>());
       this.request.body.getContacts().add(new WebServiceContact("email", "x@y.z"));
       this.request.body.getContacts().add(new WebServiceContact("phone", "0123 / 456 78 - 9"));
+      this.request.setEnumVal(EnumValForTest.EXTENDED);
    }
 
 
@@ -65,7 +66,7 @@ public class WebServiceJsonCallerTest extends TestCase {
 
       final String url = caller.prepareUrlForTest("/v1/customer/{customerNumber}/info", this.request, fields);
 
-      assertEquals("prepared url", "/v1/customer/34731/info?name=Tester&birthdate=19800229T134532000%2B0100", url);
+      assertEquals("prepared url", "/v1/customer/34731/info?name=Tester&birthdate=19800229T134532000%2B0100&enumVal=extended", url);
    }
 
 
@@ -78,7 +79,7 @@ public class WebServiceJsonCallerTest extends TestCase {
 
       final String url = caller.prepareUrlForTest("/v1/customer/{customerNumber}/info", this.request, fields);
 
-      assertEquals("prepared url", "/v1/customer/34731/info?name=Tester&birthdate=29-02-1980+13%3A45%3A32", url);
+      assertEquals("prepared url", "/v1/customer/34731/info?name=Tester&birthdate=29-02-1980+13%3A45%3A32&enumVal=extended", url);
    }
 
 
@@ -95,7 +96,7 @@ public class WebServiceJsonCallerTest extends TestCase {
 
 
    @Test
-   public void testParseRequestThrowsException() throws MssException {
+   public void testParseRequestThrowsException() {
       final WebServiceJsonCallerForTest<WebServiceTestRequest, WebServiceTestResponse> caller = new WebServiceJsonCallerForTest<>();
 
       try {

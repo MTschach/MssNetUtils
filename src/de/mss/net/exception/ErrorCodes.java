@@ -22,6 +22,7 @@ public class ErrorCodes implements Serializable {
    public static final Error ERROR_FIELD_TOO_SHORT           = new Error(ERROR_CODE_BASE + 10, "field value is too short");
    public static final Error ERROR_FIELD_TOO_LONG            = new Error(ERROR_CODE_BASE + 11, "field value is too long");
    public static final Error ERROR_FIELD_INVALID_LENGTH      = new Error(ERROR_CODE_BASE + 12, "field value has an invalid length");
+   public static final Error ERROR_INVALID_ENUM_VALUE        = new Error(ERROR_CODE_BASE + 13, "valule is not valid for enumeration field");
 
    private ErrorCodes() {}
 }

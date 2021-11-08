@@ -1,7 +1,7 @@
 package de.mss.net.webservice;
 
 
-public class WebServiceResponse implements java.io.Serializable {
+public class WebServiceResponse extends CheckRequiredFields {
 
    private static final long serialVersionUID = -2408071715329783134L;
    private Integer           errorCode        = null;

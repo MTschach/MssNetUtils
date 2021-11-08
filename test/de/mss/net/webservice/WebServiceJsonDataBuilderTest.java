@@ -36,6 +36,7 @@ public class WebServiceJsonDataBuilderTest extends TestCase {
       this.params.put("floatVal", "2.34");
       this.params.put("boolVal", "true");
       this.params.put("body", "");
+      this.params.put("enumVal", "single");
    }
 
 
