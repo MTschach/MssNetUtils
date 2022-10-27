@@ -1,5 +1,12 @@
 package de.mss.net.rest;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -16,14 +23,14 @@ import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicStatusLine;
 import org.apache.logging.log4j.LogManager;
 import org.easymock.EasyMock;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import de.mss.net.Server;
 import de.mss.utils.Tools;
 import de.mss.utils.exception.MssException;
-import junit.framework.TestCase;
 
-public class RestExecutorTest extends TestCase {
+public class RestExecutorTest {
 
    private CloseableHttpClient   httpClientMock;
    private CloseableHttpResponse httpResponseMock;
@@ -42,9 +49,8 @@ public class RestExecutorTest extends TestCase {
    }
 
 
-   @Override
+   @BeforeEach
    public void setUp() throws Exception {
-      super.setUp();
       this.httpClientMock = EasyMock.createNiceMock(CloseableHttpClient.class);
       this.httpResponseMock = EasyMock.createNiceMock(CloseableHttpResponse.class);
 

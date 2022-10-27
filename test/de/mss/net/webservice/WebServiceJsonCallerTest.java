@@ -1,29 +1,31 @@
 package de.mss.net.webservice;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import java.lang.reflect.Field;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
-import org.apache.commons.lang3.reflect.FieldUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import de.mss.net.rest.RestMethod;
 import de.mss.net.rest.RestRequest;
 import de.mss.utils.exception.MssException;
-import junit.framework.TestCase;
 
 
-public class WebServiceJsonCallerTest extends TestCase {
+public class WebServiceJsonCallerTest {
 
    private WebServiceTestRequest request;
 
 
-   @Override
+   @BeforeEach
    public void setUp() throws Exception {
-      super.setUp();
-
       this.request = new WebServiceTestRequest();
       this.request.birthdate = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss").parse("29.02.1980 13:45:32");
       this.request.customerNumber = Integer.valueOf(34731);
@@ -48,12 +50,12 @@ public class WebServiceJsonCallerTest extends TestCase {
       this.request.setLoggingId(loggingId);
       final WebServiceJsonCallerForTest<WebServiceTestRequest, WebServiceTestResponse> caller = new WebServiceJsonCallerForTest<>();
 
-      final List<Field> fields = FieldUtils.getAllFieldsList(this.request.getClass());
+      final List<Field> fields = Arrays.asList(this.request.getClass().getDeclaredFields());
 
       final RestRequest restRequest = caller.getRestRequestForTest(RestMethod.POST, this.request, fields);
 
-      assertNotNull("Rest request is not null", restRequest);
-      assertEquals("TestRest request", "loggingId: " + loggingId, this.request.toString());
+      assertNotNull(restRequest);
+      assertEquals("LoggingId {" + loggingId + "} ", this.request.toString());
       this.request.checkRequiredFields();
    }
 
@@ -62,11 +64,11 @@ public class WebServiceJsonCallerTest extends TestCase {
    public void testJsonCallerUrl() {
       final WebServiceJsonCallerForTest<WebServiceTestRequest, WebServiceTestResponse> caller = new WebServiceJsonCallerForTest<>();
 
-      final List<Field> fields = FieldUtils.getAllFieldsList(this.request.getClass());
+      final List<Field> fields = Arrays.asList(this.request.getClass().getDeclaredFields());
 
       final String url = caller.prepareUrlForTest("/v1/customer/{customerNumber}/info", this.request, fields);
 
-      assertEquals("prepared url", "/v1/customer/34731/info?name=Tester&birthdate=19800229T134532000%2B0100&enumVal=extended", url);
+      assertEquals("/v1/customer/34731/info?name=Tester&birthdate=19800229T134532000%2B0100&enumVal=extended", url);
    }
 
 
@@ -75,11 +77,21 @@ public class WebServiceJsonCallerTest extends TestCase {
       final WebServiceJsonCallerForTest<WebServiceTestRequest, WebServiceTestResponse> caller = new WebServiceJsonCallerForTest<>();
       caller.setDateFormat("dd-MM-yyyy HH:mm:ss");
 
-      final List<Field> fields = FieldUtils.getAllFieldsList(this.request.getClass());
+      final List<Field> fields = Arrays.asList(this.request.getClass().getDeclaredFields());
 
       final String url = caller.prepareUrlForTest("/v1/customer/{customerNumber}/info", this.request, fields);
 
-      assertEquals("prepared url", "/v1/customer/34731/info?name=Tester&birthdate=29-02-1980+13%3A45%3A32&enumVal=extended", url);
+      assertEquals("/v1/customer/34731/info?name=Tester&birthdate=29-02-1980+13%3A45%3A32&enumVal=extended", url);
+   }
+
+
+   @Test
+   public void testParseDate() throws MssException {
+      final WebServiceJsonCallerForTest<WebServiceTestRequest, WebServiceTestResponse> caller = new WebServiceJsonCallerForTest<>();
+      final WebServiceTestResponse resp = caller.parseContentTest("{\"validFrom\": \"11.11.2021\"}", new WebServiceTestResponse());
+
+      assertNotNull(resp);
+      assertNotNull(resp.getValidFrom());
    }
 
 
@@ -88,6 +100,19 @@ public class WebServiceJsonCallerTest extends TestCase {
       final WebServiceJsonCallerForTest<WebServiceTestRequest, WebServiceTestResponse> caller = new WebServiceJsonCallerForTest<>();
 
       final WebServiceTestResponse resp = caller.parseContentTest("{\"errorCode\": 0, \"state\":\"active\"}", new WebServiceTestResponse());
+
+      assertNotNull(resp);
+      assertEquals(Integer.valueOf(0), resp.getErrorCode());
+      assertEquals("active", resp.getState());
+   }
+
+
+   @Test
+   public void testParseRequest1() throws MssException {
+      final WebServiceJsonCallerForTest<WebServiceTestRequest, WebServiceTestResponse> caller = new WebServiceJsonCallerForTest<>();
+
+      final WebServiceTestResponse resp = caller
+            .parseContentTest("{\"errorCode\": 0, \"state\":\"active\", \"enumVal\": \"simple\"}", new WebServiceTestResponse());
 
       assertNotNull(resp);
       assertEquals(Integer.valueOf(0), resp.getErrorCode());

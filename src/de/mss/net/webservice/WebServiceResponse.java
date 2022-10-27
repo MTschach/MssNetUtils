@@ -1,13 +1,29 @@
 package de.mss.net.webservice;
 
+import java.util.HashMap;
+import java.util.Map;
 
-public class WebServiceResponse extends CheckRequiredFields {
+import de.mss.utils.logging.Logable;
+import de.mss.utils.logging.LoggingUtil;
+
+public class WebServiceResponse extends CheckRequiredFields implements Logable {
 
    private static final long serialVersionUID = -2408071715329783134L;
    private Integer           errorCode        = null;
    private Integer           statusCode       = null;
    private String            errorText        = null;
    private byte[]            binaryContent    = null;
+
+
+   @Override
+   public Map<String, String> doLogging() {
+      Map<String, String> ret = new HashMap<>();
+      ret = LoggingUtil.addLogging("ErrorCode", this.errorCode, ret);
+      ret = LoggingUtil.addLogging("StatusCode", this.statusCode, ret);
+      ret = LoggingUtil.addLogging("ErrorText", this.errorText, ret);
+      ret = LoggingUtil.addLogging("BinaryContent", this.binaryContent, ret);
+      return ret;
+   }
 
 
    public byte[] getBinaryContent() {
@@ -67,24 +83,6 @@ public class WebServiceResponse extends CheckRequiredFields {
 
    @Override
    public String toString() {
-      final StringBuilder sb = new StringBuilder();
-
-      if (this.errorCode != null) {
-         sb.append("errorCode {" + this.errorCode.toString() + "} ");
-      }
-
-      if (this.statusCode != null) {
-         sb.append("statusCode {" + this.statusCode.toString() + "} ");
-      }
-
-      if (this.errorText != null) {
-         sb.append("errorText {" + this.errorText + "} ");
-      }
-
-      if (this.binaryContent != null) {
-         sb.append("binaryContent {" + this.binaryContent.length + " bytes} ");
-      }
-
-      return sb.toString();
+      return LoggingUtil.getLogString(doLogging());
    }
 }

@@ -1,13 +1,18 @@
 package de.mss.net.call;
 
-import org.junit.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import de.mss.net.webservice.WebServiceTestRequest;
 import de.mss.net.webservice.WebServiceTestResponse;
 import de.mss.utils.Tools;
-import junit.framework.TestCase;
 
-public class BaseCallTest extends TestCase {
+public class BaseCallTest {
 
    private BaseCallForTest                    classUnderTest = null;
    private WebServiceTestRequest              request        = null;
@@ -19,30 +24,22 @@ public class BaseCallTest extends TestCase {
 
 
    private void checkResponse(WebServiceTestResponse response, Integer errorCode, Integer statusCode) {
-      assertNotNull("Response is not null", response);
-      assertEquals("ErrorCode", errorCode, response.getErrorCode());
-      assertEquals("StatusCode", statusCode, response.getStatusCode());
+      assertNotNull(response);
+      assertEquals(errorCode, response.getErrorCode());
+      assertEquals(statusCode, response.getStatusCode());
       if (errorCode.intValue() == 0) {
-         assertNull("ErrorText", response.getErrorText());
+         assertNull(response.getErrorText());
       } else {
-         assertNotNull("ErrorText", response.getErrorText());
+         assertNotNull(response.getErrorText());
       }
       assertNotNull(this.classUnderTest.getError());
    }
 
 
-   @Override
+   @BeforeEach
    public void setUp() throws Exception {
-      super.setUp();
-
       this.classUnderTest = new BaseCallForTest(WebServiceTestResponse::new, this.defaultError);
       this.request = new WebServiceTestRequest();
-   }
-
-
-   @Override
-   public void tearDown() throws Exception {
-      super.tearDown();
    }
 
 

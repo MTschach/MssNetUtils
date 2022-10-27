@@ -1,11 +1,12 @@
 package de.mss.net.webservice;
 
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import org.junit.jupiter.api.Test;
 
 import de.mss.utils.exception.MssException;
-import junit.framework.TestCase;
 
-public class CheckRequiredFieldsTest extends TestCase {
+public class CheckRequiredFieldsTest {
 
    private final CheckRequiredFieldsForTest classUnderTest = new CheckRequiredFieldsForTest();
 

@@ -12,6 +12,7 @@ import java.util.Map;
 import jakarta.servlet.AsyncContext;
 import jakarta.servlet.DispatcherType;
 import jakarta.servlet.RequestDispatcher;
+import jakarta.servlet.ServletConnection;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletInputStream;
@@ -265,6 +266,13 @@ public class HttpServletTestRequest implements HttpServletRequest {
 
 
    @Override
+   public String getProtocolRequestId() {
+      // TODO Auto-generated method stub
+      return null;
+   }
+
+
+   @Override
    public String getQueryString() {
       // TODO Auto-generated method stub
       return null;
@@ -273,13 +281,6 @@ public class HttpServletTestRequest implements HttpServletRequest {
 
    @Override
    public BufferedReader getReader() throws IOException {
-      // TODO Auto-generated method stub
-      return null;
-   }
-
-
-   @Override
-   public String getRealPath(String path) {
       // TODO Auto-generated method stub
       return null;
    }
@@ -328,6 +329,13 @@ public class HttpServletTestRequest implements HttpServletRequest {
 
 
    @Override
+   public String getRequestId() {
+      // TODO Auto-generated method stub
+      return null;
+   }
+
+
+   @Override
    public String getRequestURI() {
       // TODO Auto-generated method stub
       return null;
@@ -359,6 +367,13 @@ public class HttpServletTestRequest implements HttpServletRequest {
    public int getServerPort() {
       // TODO Auto-generated method stub
       return 0;
+   }
+
+
+   @Override
+   public ServletConnection getServletConnection() {
+      // TODO Auto-generated method stub
+      return null;
    }
 
 
@@ -413,13 +428,6 @@ public class HttpServletTestRequest implements HttpServletRequest {
 
    @Override
    public boolean isRequestedSessionIdFromCookie() {
-      // TODO Auto-generated method stub
-      return false;
-   }
-
-
-   @Override
-   public boolean isRequestedSessionIdFromUrl() {
       // TODO Auto-generated method stub
       return false;
    }

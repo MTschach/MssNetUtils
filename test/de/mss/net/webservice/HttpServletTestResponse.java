@@ -47,21 +47,7 @@ public class HttpServletTestResponse implements HttpServletResponse {
 
 
    @Override
-   public String encodeRedirectUrl(String url) {
-      // TODO Auto-generated method stub
-      return null;
-   }
-
-
-   @Override
    public String encodeRedirectURL(String url) {
-      // TODO Auto-generated method stub
-      return null;
-   }
-
-
-   @Override
-   public String encodeUrl(String url) {
       // TODO Auto-generated method stub
       return null;
    }
@@ -262,11 +248,5 @@ public class HttpServletTestResponse implements HttpServletResponse {
 
    }
 
-
-   @Override
-   public void setStatus(int sc, String sm) {
-      // TODO Auto-generated method stub
-
-   }
 
 }

@@ -5,7 +5,7 @@ import java.util.List;
 public class WebServiceBody implements java.io.Serializable {
 
    /**
-    * 
+    *
     */
    private static final long       serialVersionUID = 1L;
    private String                  street;
@@ -13,15 +13,11 @@ public class WebServiceBody implements java.io.Serializable {
 
    private List<WebServiceContact> contacts;
    private WebServiceAddress       address;
+   private EnumValForTest          enumVal;
 
 
-   public String getStreet() {
-      return this.street;
-   }
-
-
-   public String getNumber() {
-      return this.number;
+   public WebServiceAddress getAddress() {
+      return this.address;
    }
 
 
@@ -30,18 +26,23 @@ public class WebServiceBody implements java.io.Serializable {
    }
 
 
-   public WebServiceAddress getAddress() {
-      return this.address;
+   public EnumValForTest getEnumVal() {
+      return this.enumVal;
    }
 
 
-   public void setStreet(String s) {
-      this.street = s;
+   public String getNumber() {
+      return this.number;
    }
 
 
-   public void setNumber(String n) {
-      this.number = n;
+   public String getStreet() {
+      return this.street;
+   }
+
+
+   public void setAddress(WebServiceAddress a) {
+      this.address = a;
    }
 
 
@@ -50,7 +51,17 @@ public class WebServiceBody implements java.io.Serializable {
    }
 
 
-   public void setAddress(WebServiceAddress a) {
-      this.address = a;
+   public void setEnumVal(EnumValForTest e) {
+      this.enumVal = e;
+   }
+
+
+   public void setNumber(String n) {
+      this.number = n;
+   }
+
+
+   public void setStreet(String s) {
+      this.street = s;
    }
 }

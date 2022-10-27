@@ -40,7 +40,7 @@ public abstract class WebService<R extends WebServiceRequest, T extends WebServi
    protected static Map<String, String> getUrlParams(Request request) {
       final Map<String, String> ret = new HashMap<>();
 
-      if (request != null && request.getRequestURI() != null && request.getRequestURI().indexOf('?') >= 0) {
+      if ((request != null) && (request.getRequestURI() != null) && (request.getRequestURI().indexOf('?') >= 0)) {
          final String[] params = request.getRequestURI().substring(request.getRequestURI().indexOf('?') + 1).split("&");
          for (final String keyValue : params) {
             final String[] kv = keyValue.split("=");
@@ -122,7 +122,7 @@ public abstract class WebService<R extends WebServiceRequest, T extends WebServi
       int statusCode = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
       if (e.getError().getStatusCode() != null) {
          statusCode = e.getError().getStatusCode().intValue();
-      } else if (resp != null && resp.getStatusCode() != null) {
+      } else if ((resp != null) && (resp.getStatusCode() != null)) {
          statusCode = resp.getStatusCode().intValue();
       }
 
@@ -198,7 +198,7 @@ public abstract class WebService<R extends WebServiceRequest, T extends WebServi
 
 
    private boolean useErrorCode(Integer error) {
-      return error != null && error.intValue() != 0 && error.intValue() / 100 != 2;
+      return (error != null) && (error.intValue() != 0) && ((error.intValue() / 100) != 2);
    }
 
 

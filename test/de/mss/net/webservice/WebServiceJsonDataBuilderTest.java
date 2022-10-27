@@ -1,27 +1,29 @@
 package de.mss.net.webservice;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import de.mss.net.exception.ErrorCodes;
 import de.mss.utils.DateTimeTools;
 import de.mss.utils.exception.MssException;
-import junit.framework.TestCase;
 
 
-public class WebServiceJsonDataBuilderTest extends TestCase {
+public class WebServiceJsonDataBuilderTest {
 
    private WebServiceJsonDataBuilder<WebServiceTestRequest> classUnderTest;
    private Map<String, String>                              params;
 
-   @Override
+   @BeforeEach
    public void setUp() throws Exception {
-      super.setUp();
-
       this.classUnderTest = new WebServiceJsonDataBuilder<>();
       this.params = new HashMap<>();
       this.params.put("sessionId", "sessionId");
@@ -40,12 +42,6 @@ public class WebServiceJsonDataBuilderTest extends TestCase {
    }
 
 
-   @Override
-   public void tearDown() throws Exception {
-      super.tearDown();
-   }
-
-
    @Test
    public void testClassNull() throws IllegalAccessException, InvocationTargetException, IOException, MssException {
       assertNull(this.classUnderTest.parseData(this.params, null));
@@ -60,7 +56,7 @@ public class WebServiceJsonDataBuilderTest extends TestCase {
          fail("no exception was thrown");
       }
       catch (final MssException e) {
-         assertEquals("ErrorCode", ErrorCodes.ERROR_PATH_PARAMETER_NOT_SET, e.getError());
+         assertEquals(ErrorCodes.ERROR_PATH_PARAMETER_NOT_SET, e.getError());
       }
    }
 

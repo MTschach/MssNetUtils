@@ -1,16 +1,45 @@
 package de.mss.net.webservice;
 
-import javax.ws.rs.HeaderParam;
+import java.util.HashMap;
+import java.util.Map;
 
-public class WebServiceRequest extends CheckRequiredFields {
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.QueryParam;
+
+import de.mss.utils.logging.Logable;
+import de.mss.utils.logging.LoggingUtil;
+
+public class WebServiceRequest extends CheckRequiredFields implements Logable {
 
    private static final long serialVersionUID = 7666097603777732487L;
 
    @HeaderParam(value = "loggingId")
    private String            loggingId        = null;
 
+   @QueryParam(value = "language")
+   private String            language;
+
+   @Override
+   public Map<String, String> doLogging() {
+      Map<String, String> ret = new HashMap<>();
+      ret = LoggingUtil.addLogging("LoggingId", this.loggingId, ret);
+      ret = LoggingUtil.addLogging("Language", this.language, ret);
+      return ret;
+   }
+
+
+   public String getLanguage() {
+      return this.language;
+   }
+
+
    public String getLoggingId() {
       return this.loggingId;
+   }
+
+
+   public void setLanguage(String v) {
+      this.language = v;
    }
 
 
@@ -21,12 +50,6 @@ public class WebServiceRequest extends CheckRequiredFields {
 
    @Override
    public String toString() {
-      final StringBuilder sb = new StringBuilder();
-
-      if (this.loggingId != null) {
-         sb.append("loggingId: " + this.loggingId);
-      }
-
-      return sb.toString();
+      return de.mss.utils.logging.LoggingUtil.getLogString(doLogging());
    }
 }

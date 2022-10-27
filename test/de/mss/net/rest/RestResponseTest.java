@@ -1,20 +1,23 @@
 package de.mss.net.rest;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.HashMap;
 import java.util.Map;
 
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import junit.framework.TestCase;
-
-public class RestResponseTest extends TestCase {
+public class RestResponseTest {
 
    private RestResponse response;
 
-   @Override
+   @BeforeEach
    public void setUp() throws Exception {
-      super.setUp();
-
       this.response = new RestResponse(200);
       this.response.setContent("content");
    }

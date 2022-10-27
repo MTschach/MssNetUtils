@@ -1,10 +1,12 @@
 package de.mss.net.webservice;
 
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
-public class WebServiceResponseTest extends TestCase {
+public class WebServiceResponseTest {
 
    @Test
    public void testBinaryContent() {
@@ -14,7 +16,9 @@ public class WebServiceResponseTest extends TestCase {
       assertFalse(resp.hasErrorCode());
       assertFalse(resp.hasErrorText());
       assertFalse(resp.hasStatusCode());
-      assertEquals("binaryContent {13 bytes} ", resp.toString());
+      assertEquals(
+            "BinaryContent {[ size {13} [0] {98} [1] {105} [2] {110} [3] {97} [4] {114} [5] {121} [6] {67} [7] {111} [8] {110} [9] {116} [10] {101} [11] {110} [12] {116} ] } ",
+            resp.toString());
    }
 
 
@@ -29,7 +33,9 @@ public class WebServiceResponseTest extends TestCase {
       assertTrue(resp.hasErrorCode());
       assertTrue(resp.hasErrorText());
       assertTrue(resp.hasStatusCode());
-      assertEquals("errorCode {123} statusCode {200} errorText {ERRORTEXT} binaryContent {13 bytes} ", resp.toString());
+      assertEquals(
+            "BinaryContent {[ size {13} [0] {98} [1] {105} [2] {110} [3] {97} [4] {114} [5] {121} [6] {67} [7] {111} [8] {110} [9] {116} [10] {101} [11] {110} [12] {116} ] } ErrorCode {123} ErrorText {ERRORTEXT} StatusCode {200} ",
+            resp.toString());
    }
 
 
@@ -42,7 +48,9 @@ public class WebServiceResponseTest extends TestCase {
       assertFalse(resp.hasErrorCode());
       assertTrue(resp.hasErrorText());
       assertFalse(resp.hasStatusCode());
-      assertEquals("errorText {ERRORTEXT} binaryContent {13 bytes} ", resp.toString());
+      assertEquals(
+            "BinaryContent {[ size {13} [0] {98} [1] {105} [2] {110} [3] {97} [4] {114} [5] {121} [6] {67} [7] {111} [8] {110} [9] {116} [10] {101} [11] {110} [12] {116} ] } ErrorText {ERRORTEXT} ",
+            resp.toString());
    }
 
 
@@ -72,7 +80,9 @@ public class WebServiceResponseTest extends TestCase {
       assertFalse(resp.hasErrorCode());
       assertTrue(resp.hasErrorText());
       assertTrue(resp.hasStatusCode());
-      assertEquals("statusCode {200} errorText {ERRORTEXT} binaryContent {13 bytes} ", resp.toString());
+      assertEquals(
+            "BinaryContent {[ size {13} [0] {98} [1] {105} [2] {110} [3] {97} [4] {114} [5] {121} [6] {67} [7] {111} [8] {110} [9] {116} [10] {101} [11] {110} [12] {116} ] } ErrorText {ERRORTEXT} StatusCode {200} ",
+            resp.toString());
    }
 
 }

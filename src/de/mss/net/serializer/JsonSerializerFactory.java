@@ -1,7 +1,9 @@
 package de.mss.net.serializer;
 
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.core.Version;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 
 public class JsonSerializerFactory {
 
@@ -9,10 +11,13 @@ public class JsonSerializerFactory {
 
    public static ObjectMapper getInstance() {
       if (instance == null) {
-         instance = new ObjectMapper().configure(org.codehaus.jackson.map.DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-         instance.setSerializationInclusion(Inclusion.NON_NULL);
+         instance = new ObjectMapper().configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+         instance.setSerializationInclusion(Include.NON_NULL);
          //         instance.setDateFormat(new SimpleDateFormat(DateTimeFormat.DATE_TIMESTAMP_FORMAT_UTC.getFormat()));
          instance.setDateFormat(new MssDateFormat());
+         final SimpleModule module = new SimpleModule("DateDeserializer", new Version(1, 0, 0, "", "", ""));
+         module.addDeserializer(java.util.Date.class, new MssJsonDateSerializer());
+         instance.registerModule(module);
       }
 
       return instance;

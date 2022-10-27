@@ -24,6 +24,7 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 
 import de.mss.configtools.ConfigFile;
+import de.mss.utils.exception.MssException;
 import de.mss.utils.os.OsType;
 
 public abstract class WebServiceServer {
@@ -132,7 +133,7 @@ public abstract class WebServiceServer {
    protected abstract Map<String, WebService<WebServiceRequest, WebServiceResponse>> getServiceList();
 
 
-   protected abstract void initApplication();
+   protected abstract void initApplication() throws MssException;
 
 
    private Map<String, WebService<WebServiceRequest, WebServiceResponse>> loadFromFileSystem(ClassLoader cl, String packageName, String pathPrefix) {

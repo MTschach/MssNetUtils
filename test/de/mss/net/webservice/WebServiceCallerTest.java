@@ -1,5 +1,9 @@
 package de.mss.net.webservice;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -18,7 +22,9 @@ import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicStatusLine;
 import org.apache.logging.log4j.LogManager;
 import org.easymock.EasyMock;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import de.mss.net.rest.HttpClientFactory;
 import de.mss.net.rest.RestExecutor;
@@ -26,9 +32,8 @@ import de.mss.net.rest.RestMethod;
 import de.mss.net.rest.RestServer;
 import de.mss.utils.Tools;
 import de.mss.utils.exception.MssException;
-import junit.framework.TestCase;
 
-public class WebServiceCallerTest extends TestCase {
+public class WebServiceCallerTest {
 
    private WebServiceCallerForTest<WebServiceTestRequest, WebServiceTestResponse> classUnderTest;
    private RestServer[]                                                           restServers;
@@ -37,12 +42,12 @@ public class WebServiceCallerTest extends TestCase {
 
 
    private void checkResponse(WebServiceTestResponse resp, String binaryContent, int errorCode) {
-      assertNotNull("Response is not null", resp);
-      assertEquals("ErrorCode", Integer.valueOf(errorCode), resp.getErrorCode());
+      assertNotNull(resp);
+      assertEquals(Integer.valueOf(errorCode), resp.getErrorCode());
       if (binaryContent == null) {
-         assertNull("binaryContent", resp.getBinaryContent());
+         assertNull(resp.getBinaryContent());
       } else {
-         assertEquals("binaryContent", binaryContent, new String(resp.getBinaryContent()));
+         assertEquals(binaryContent, new String(resp.getBinaryContent()));
       }
    }
 
@@ -71,9 +76,8 @@ public class WebServiceCallerTest extends TestCase {
    }
 
 
-   @Override
+   @BeforeEach
    public void setUp() throws Exception {
-      super.setUp();
 
       this.classUnderTest = new WebServiceCallerForTest<>();
       this.restServers = new RestServer[] {new RestServer("localhost:8080:/v1/info")};
@@ -128,10 +132,8 @@ public class WebServiceCallerTest extends TestCase {
    }
 
 
-   @Override
+   @AfterEach
    public void tearDown() throws Exception {
-      super.tearDown();
-
       verify();
    }
 

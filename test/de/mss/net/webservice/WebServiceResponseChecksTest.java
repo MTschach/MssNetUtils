@@ -1,10 +1,11 @@
 package de.mss.net.webservice;
 
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
-public class WebServiceResponseChecksTest extends TestCase {
+public class WebServiceResponseChecksTest {
 
    @Test
    public void test() {

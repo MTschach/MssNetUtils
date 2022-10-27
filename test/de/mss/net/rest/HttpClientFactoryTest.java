@@ -1,17 +1,19 @@
 package de.mss.net.rest;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import de.mss.net.AuthenticatedServer;
 import de.mss.utils.exception.MssException;
-import junit.framework.TestCase;
 
-public class HttpClientFactoryTest extends TestCase {
+public class HttpClientFactoryTest {
 
-   @Override
+   @BeforeEach
    public void setUp() throws Exception {
-      super.setUp();
       HttpClientFactory.initializeHttpClientFactory(null);
    }
 

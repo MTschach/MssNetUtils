@@ -9,6 +9,17 @@ public class RestServer {
    private de.mss.net.Server              server = null;
    private de.mss.net.AuthenticatedServer proxy  = null;
 
+   public RestServer(Server s) {
+      this.server = s;
+   }
+
+
+   public RestServer(Server s, AuthenticatedServer p) {
+      this.server = s;
+      this.proxy = p;
+   }
+
+
    public RestServer(String url) throws MssException {
       setServer(url);
    }

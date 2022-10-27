@@ -30,9 +30,9 @@ public abstract class BaseCall<T extends WebServiceRequest, R extends WebService
 
          request.checkRequiredFields();
 
-         checkRequest(loggingId, request);
-
          beforeAction(loggingId, request);
+
+         checkRequest(loggingId, request);
 
          response = doAction(loggingId, request);
 
@@ -83,13 +83,18 @@ public abstract class BaseCall<T extends WebServiceRequest, R extends WebService
    }
 
 
+   protected String getErrorText(MssException e) {
+      return e.getError().getErrorText();
+   }
+
+
    private R handleException(MssException e) {
       final R response = this.responseSupplier.get();
 
       response.setStatusCode(Integer.valueOf(HttpServletResponse.SC_BAD_REQUEST));
 
       response.setErrorCode(Integer.valueOf(e.getError().getErrorCode()));
-      response.setErrorText(e.getError().getErrorText());
+      response.setErrorText(getErrorText(e));
 
       if (e.getAltErrorCode() != 0) {
          response.setErrorCode(Integer.valueOf(e.getAltErrorCode()));

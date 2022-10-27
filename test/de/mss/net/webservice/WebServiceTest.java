@@ -1,5 +1,11 @@
 package de.mss.net.webservice;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -7,15 +13,15 @@ import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.easymock.EasyMock;
 import org.eclipse.jetty.server.Request;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import de.mss.net.rest.RestMethod;
 import de.mss.utils.Tools;
 import de.mss.utils.exception.MssException;
 import jakarta.servlet.http.HttpServletResponse;
-import junit.framework.TestCase;
 
-public class WebServiceTest extends TestCase {
+public class WebServiceTest {
 
    private WebServiceForTest classUnderTest;
 
@@ -28,7 +34,7 @@ public class WebServiceTest extends TestCase {
       map.put("customerNumber", "1234567");
       map.put("username", "username");
       map.put("name", "name");
-      map.put("checkIntervale", "30");
+      map.put("checkInterval", "30");
       map.put("birthDate", "2000-01-01");
       map.put("bigDval", "1.23");
       map.put("bigVal", "123");
@@ -36,21 +42,14 @@ public class WebServiceTest extends TestCase {
       map.put("floatVal", "3.45");
       map.put("enumVal", "simple");
 
+
       return map;
    }
 
 
-   @Override
+   @BeforeEach
    public void setUp() throws Exception {
-      super.setUp();
-
       this.classUnderTest = new WebServiceForTest(WebServiceTestRequest::new, WebServiceTestResponse::new);
-   }
-
-
-   @Override
-   public void tearDown() throws Exception {
-      super.tearDown();
    }
 
 
@@ -62,7 +61,7 @@ public class WebServiceTest extends TestCase {
          fail("no exception was thrown");
       }
       catch (final MssException e) {
-         assertEquals("ErrorCode", de.mss.utils.exception.ErrorCodes.ERROR_INVALID_PARAM, e.getError());
+         assertEquals(de.mss.utils.exception.ErrorCodes.ERROR_INVALID_PARAM, e.getError());
       }
    }
 
@@ -71,19 +70,19 @@ public class WebServiceTest extends TestCase {
    public void testGetDefaultOkResponse() {
       final WebServiceResponse resp = WebService.getDefaultOkResponse();
 
-      assertNotNull("Response is not null", resp);
-      assertNull("ErrorCode", resp.getErrorCode());
-      assertEquals("StatusCode", Integer.valueOf(200), resp.getStatusCode());
-      assertNull("ErrorText", resp.getErrorText());
-      assertNull("Binary content", resp.getBinaryContent());
+      assertNotNull(resp);
+      assertNull(resp.getErrorCode());
+      assertEquals(Integer.valueOf(200), resp.getStatusCode());
+      assertNull(resp.getErrorText());
+      assertNull(resp.getBinaryContent());
    }
 
 
    @Test
    public void testGetMethod() {
-      assertEquals("Method GET", RestMethod.GET, this.classUnderTest.getMethod());
+      assertEquals(RestMethod.GET, this.classUnderTest.getMethod());
       this.classUnderTest.setMethod(RestMethod.POST);
-      assertEquals("Method GET", RestMethod.POST, this.classUnderTest.getMethod());
+      assertEquals(RestMethod.POST, this.classUnderTest.getMethod());
    }
 
 
@@ -93,7 +92,7 @@ public class WebServiceTest extends TestCase {
 
       final WebServiceTestRequest req = this.classUnderTest.getParsedRequestForTest(null, params, (Request)null);
 
-      assertNotNull("Request is not null", req);
+      assertNotNull(req);
    }
 
 
@@ -108,36 +107,36 @@ public class WebServiceTest extends TestCase {
       }
       catch (final MssException e) {
          assertNotNull(e);
-         assertEquals("ErrorCode", de.mss.net.exception.ErrorCodes.ERROR_NOT_PARSABLE, e.getError());
+         assertEquals(de.mss.net.exception.ErrorCodes.ERROR_NOT_PARSABLE, e.getError());
       }
    }
 
 
    @Test
    public void testGetPath() {
-      assertEquals("Path", "v1/info", this.classUnderTest.getPath());
+      assertEquals("v1/info", this.classUnderTest.getPath());
    }
 
 
    @Test
    public void testGetUrlParams() {
       Map<String, String> params = WebServiceForTest.getUrlParamsForTest(null);
-      assertNotNull("params are not null", params);
-      assertTrue("params are empty", params.isEmpty());
+      assertNotNull(params);
+      assertTrue(params.isEmpty());
 
       params = WebServiceForTest.getUrlParamsForTest(new RequestForTest(null));
-      assertNotNull("params are not null", params);
-      assertTrue("params are empty", params.isEmpty());
+      assertNotNull(params);
+      assertTrue(params.isEmpty());
 
       params = WebServiceForTest.getUrlParamsForTest(new RequestForTest("http://localhost:8080/v1/info"));
-      assertNotNull("params are not null", params);
-      assertTrue("params are empty", params.isEmpty());
+      assertNotNull(params);
+      assertTrue(params.isEmpty());
 
       params = WebServiceForTest.getUrlParamsForTest(new RequestForTest("http://localhost:8080/v1/info?param1=value1&param2=value2"));
-      assertNotNull("params are not null", params);
-      assertEquals("params size", Integer.valueOf(2), Integer.valueOf(params.size()));
-      assertEquals("param1", "value1", params.get("param1"));
-      assertEquals("param2", "value2", params.get("param2"));
+      assertNotNull(params);
+      assertEquals(Integer.valueOf(2), Integer.valueOf(params.size()));
+      assertEquals("value1", params.get("param1"));
+      assertEquals("value2", params.get("param2"));
    }
 
 
@@ -272,6 +271,6 @@ public class WebServiceTest extends TestCase {
 
    @Test
    public void testSimpleHandleRequest() throws MssException {
-      assertNotNull("Response", this.classUnderTest.handleRequest(null, new WebServiceTestRequest()));
+      assertNotNull(this.classUnderTest.handleRequest(null, new WebServiceTestRequest()));
    }
 }

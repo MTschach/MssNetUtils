@@ -1,11 +1,13 @@
 package de.mss.net.webservice;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+
 import org.apache.logging.log4j.LogManager;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import junit.framework.TestCase;
-
-public class OptionWebServiceRequestHandlerTest extends TestCase {
+public class OptionWebServiceRequestHandlerTest {
 
    @Test
    public void testFindTarget() {
